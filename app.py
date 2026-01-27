@@ -4,241 +4,242 @@ import instaloader
 import os
 import shutil
 import time
+import requests
+from streamlit_lottie import st_lottie
 
-st.set_page_config(page_title="Rifki Downloader", page_icon="🍃", layout="wide")
+# --- 1. KONFIGURASI HALAMAN ---
+st.set_page_config(page_title="Loader.fo Clone", page_icon="🎬", layout="wide")
 
-# --- CUSTOM CSS (Gradient hero, big input, feature cards, dark footer) ---
+# --- 2. FUNGSI UTILITIES ---
+def clean_filename(title):
+    return "".join([c for c in title if c.isalnum() or c==' ']).rstrip()
+
+def detect_type(url):
+    if "instagram.com/p/" in url: return "FOTO"
+    return "VIDEO"
+
+# --- 3. CSS: DARK MODE PREMIUM (Persis Referensi) ---
 st.markdown("""
     <style>
-    /* Page background */
+    /* RESET & BACKGROUND UTAMA (Hitam Pekat) */
     .stApp {
-        background-color: #F7F7FB;
-        font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+        background-color: #050505;
+        font-family: 'Inter', sans-serif;
     }
-
-    /* HERO: gradient purple -> blue */
-    .hero {
-        background: linear-gradient(135deg, #6A4CFF 0%, #3B82F6 100%);
-        color: #ffffff;
-        padding: 60px 30px;
-        border-radius: 18px;
-        box-shadow: 0 20px 40px rgba(59,130,246,0.15);
-        margin-bottom: 30px;
-    }
-    .hero .title {
-        font-size: 42px;
-        font-weight: 800;
-        margin-bottom: 8px;
-        letter-spacing: -0.5px;
-    }
-    .hero .subtitle {
-        font-size: 16px;
-        color: rgba(255,255,255,0.92);
-        margin-bottom: 22px;
-    }
-
-    /* Input area */
-    .input-wrap {
-        display:flex;
-        gap:12px;
-        align-items:center;
-        justify-content:center;
-        max-width:900px;
+    
+    /* CONTAINER TENGAH (Kartu Abu-abu Gelap) */
+    /* Ini meniru kotak besar di tengah layar */
+    div[data-testid="stVerticalBlock"] > div {
+        max-width: 900px;
         margin: 0 auto;
     }
-    .stTextInput > div > div > input {
-        padding: 18px 20px;
-        border-radius: 14px;
-        border: none;
-        font-size: 16px;
-        box-shadow: 0 8px 20px rgba(16,24,40,0.08);
-    }
-    /* Make the input visually larger on desktop */
-    @media (min-width: 900px) {
-        .stTextInput > div > div > input { font-size:18px; padding:20px 24px; }
-    }
 
-    /* Primary CTA button style */
-    .stButton > button {
-        background: linear-gradient(90deg,#FFD166,#FFB86B);
-        color: #1F2937;
-        font-weight: 700;
-        padding: 14px 22px;
-        border-radius: 12px;
-        border: none;
-        box-shadow: 0 8px 18px rgba(255,184,107,0.18);
-        transition: transform .12s ease;
-    }
-    .stButton > button:hover { transform: translateY(-3px); }
-
-    /* Feature cards */
-    .features {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 18px;
-        margin-top: 22px;
-    }
-    .card {
-        background: #ffffff;
-        padding: 18px;
-        border-radius: 12px;
-        box-shadow: 0 8px 24px rgba(16,24,40,0.04);
-        border: 1px solid rgba(59,130,246,0.06);
-    }
-    .card .num {
-        font-size: 36px;
+    /* HEADER TEXT */
+    h1 {
+        color: white;
+        text-align: center;
         font-weight: 800;
-        color: rgba(59,130,246,0.08);
+        font-size: 3.5rem;
+        margin-bottom: 0px;
+        letter-spacing: -1px;
     }
-    .card .ctitle {
+    
+    /* SUBTITLE */
+    p {
+        color: #888888;
+        text-align: center;
+        font-size: 1rem;
+        margin-top: 10px;
+    }
+
+    /* INPUT BOX (Kolom Link) - Style Gelap Bulat */
+    .stTextInput > div > div > input {
+        background-color: #1F1F1F; /* Abu-abu gelap */
+        color: white;
+        border: 1px solid #333;
+        border-radius: 12px;
+        padding: 20px;
+        font-size: 16px;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #4c4cff;
+        box-shadow: 0 0 15px rgba(76, 76, 255, 0.2);
+    }
+
+    /* TOMBOL DOWNLOAD UTAMA (Warna Biru Neon) */
+    .stButton > button {
+        width: 100%;
+        background-color: #4c4cff; /* Biru Neon sesuai gambar */
+        color: white;
+        border: none;
+        padding: 15px;
         font-weight: 700;
-        color: #0F172A;
-        margin-top: 6px;
-        margin-bottom: 8px;
+        font-size: 16px;
+        border-radius: 12px;
+        transition: 0.3s;
     }
-    .card .cdesc { color: #475569; font-size: 14px; }
-
-    /* Footer */
-    .site-footer {
-        background: #0B1220;
-        color: rgba(255,255,255,0.85);
-        padding: 28px 20px;
-        border-radius: 10px;
-        margin-top: 30px;
+    .stButton > button:hover {
+        background-color: #3b3bff;
+        box-shadow: 0 0 20px rgba(76, 76, 255, 0.4);
     }
-    .site-footer a { color: rgba(255,255,255,0.9); text-decoration: none; margin-right: 18px; }
-    .site-footer .small { color: rgba(255,255,255,0.6); font-size: 13px; margin-top: 10px; }
 
-    /* Hide default Streamlit footer/menu */
+    /* RESULT CARD (Kartu Hasil Download) */
+    .result-card {
+        background-color: #161616;
+        border: 1px solid #333;
+        border-radius: 15px;
+        padding: 20px;
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Logo Text (Loader.fo style) */
+    .logo-text {
+        font-weight: 800;
+        font-size: 24px;
+        color: white;
+        margin-bottom: 2rem;
+    }
+    .logo-accent { color: #4c4cff; }
+
+    /* Hiding Streamlit Elements */
     footer {visibility: hidden;}
     #MainMenu {visibility: hidden;}
-    .block-container {padding-top: 1rem; padding-left: 1rem; padding-right: 1rem;}
+    header {visibility: hidden;}
+    
     </style>
 """, unsafe_allow_html=True)
 
-# --- HERO SECTION ---
-st.markdown('<div class="hero">', unsafe_allow_html=True)
-st.markdown('<div class="title">Unduh Video TikTok, Instagram & YouTube</div>', unsafe_allow_html=True)
-st.markdown('<div class="subtitle">Simpan video tanpa watermark dalam kualitas HD. Tempel tautan di bawah lalu klik Download.</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+# --- 4. LAYOUT HEADER (LOGO) ---
+col_logo, col_space = st.columns([1, 5])
+with col_logo:
+    st.markdown('<div class="logo-text">Rifki<span class="logo-accent">.fo</span></div>', unsafe_allow_html=True)
 
-# --- INPUT AREA (centered) ---
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    st.markdown('<div class="input-wrap">', unsafe_allow_html=True)
-    url = st.text_input("", placeholder="Tempel tautan video di sini... (contoh: https://...)", key="main_input")
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.write("")  # spacing
-    process_btn = st.button("DOWNLOAD SEKARANG ⬇️", use_container_width=True)
+# --- 5. HERO SECTION (JUDUL) ---
+st.markdown("<h1>YouTube Video <span style='color: #4c4cff;'>Downloader</span></h1>", unsafe_allow_html=True)
+st.markdown("<p>Try this unique tool for quick downloads from YouTube, TikTok & IG.</p>", unsafe_allow_html=True)
+st.write("") # Spacer
 
-# --- BACKEND LOGIC (tetap seperti sebelumnya) ---
-if process_btn:
+# --- 6. INPUT AREA (INPUT + BUTTON) ---
+# Kita buat layout kolom biar input panjang, button kecil di kanan (opsional, atau full width)
+# Di sini kita buat numpuk (stack) agar rapi di HP
+url = st.text_input("", placeholder="🔗 Paste URL here...")
+
+st.write("") # Jarak dikit
+
+# Tombol Eksekusi
+if st.button("Download Video", type="primary"):
+    
     if not url:
-        st.warning("⚠️ Harap masukkan link video terlebih dahulu!")
+        st.error("⚠️ Please paste a link first.")
     else:
-        tipe = "VIDEO"
-        if "instagram.com/p/" in url:
-            tipe = "FOTO"
-
+        # --- LOGIKA DOWNLOAD ---
+        tipe = detect_type(url)
         status_box = st.empty()
-        progress_bar = st.progress(0)
+        
+        # --- STYLE KARTU HASIL (RESULT CARD) ---
+        # Kita pakai Container untuk membungkus hasil biar backgroundnya beda
+        with st.container():
+            st.markdown('<div style="background-color: #111; padding: 20px; border-radius: 15px; border: 1px solid #333;">', unsafe_allow_html=True)
+            
+            # 1. VIDEO ENGINE
+            if tipe == "VIDEO":
+                status_box.info("🔄 Fetching video info...")
+                
+                # Opsi yt-dlp
+                ydl_opts = {
+                    'format': 'best',
+                    'outtmpl': 'temp_vid.%(ext)s',
+                    'quiet': True,
+                    'noplaylist': True
+                }
+                
+                try:
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        # Ambil Info Dulu (Tanpa Download)
+                        info = ydl.extract_info(url, download=False)
+                        judul = info.get('title', 'Video Unknown')
+                        thumbnail = info.get('thumbnail', '')
+                        duration = info.get('duration_string', '0:00')
+                        ext = info.get('ext', 'mp4')
+                        
+                        # TAMPILAN KARTU HASIL (Layout Kolom: Gambar | Teks)
+                        c1, c2 = st.columns([1, 2])
+                        
+                        with c1:
+                            if thumbnail:
+                                st.image(thumbnail, use_container_width=True)
+                            else:
+                                st.markdown("🎬 No Preview")
+                        
+                        with c2:
+                            st.markdown(f"<h3 style='color:white; margin:0;'>{judul}</h3>", unsafe_allow_html=True)
+                            st.markdown(f"<p style='text-align:left; color:#888;'>Format: MP4 • Durasi: {duration}</p>", unsafe_allow_html=True)
+                            
+                        st.write("---") # Garis
+                        
+                        # PROSES DOWNLOAD
+                        status_box.info("⬇️ Downloading to server...")
+                        ydl.download([url])
+                        
+                        target_file = f"temp_vid.{ext}"
+                        if os.path.exists(target_file):
+                            status_box.success("✅ Ready!")
+                            
+                            # TOMBOL DOWNLOAD FINAL (BIRU FULL)
+                            with open(target_file, "rb") as f:
+                                st.download_button(
+                                    label="Download Video Now",
+                                    data=f,
+                                    file_name=f"{clean_filename(judul)}.{ext}",
+                                    mime=f"video/{ext}",
+                                    use_container_width=True
+                                )
+                except Exception as e:
+                    st.error(f"Error: {e}")
 
-        if tipe == "VIDEO":
-            status_box.info("⏳ Sedang memproses video...")
-            def clean_name(t): return "".join([c for c in t if c.isalnum() or c==' ']).rstrip()
-            ydl_opts = {'format': 'best', 'outtmpl': 'temp_vid.%(ext)s', 'quiet': True}
-            try:
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    progress_bar.progress(30)
-                    info = ydl.extract_info(url, download=True)
-                    judul = clean_name(info.get('title', 'Video Result'))
-                    ext = info.get('ext', 'mp4')
-                    progress_bar.progress(100)
-                if os.path.exists(f"temp_vid.{ext}"):
-                    status_box.success("✅ Video Siap!")
-                    with open(f"temp_vid.{ext}", "rb") as f:
-                        st.download_button(
-                            label=f"⬇️ SIMPAN VIDEO ({ext.upper()})",
-                            data=f,
-                            file_name=f"{judul}.{ext}",
-                            mime=f"video/{ext}",
-                            use_container_width=True
-                        )
-                    # optional cleanup
-                    # os.remove(f"temp_vid.{ext}")
-            except Exception as e:
-                status_box.error(f"Gagal: {e}")
+            # 2. FOTO ENGINE
+            elif tipe == "FOTO":
+                status_box.info("📸 Fetching image...")
+                if os.path.exists("temp_img"): shutil.rmtree("temp_img")
+                
+                try:
+                    L = instaloader.Instaloader(save_metadata=False, download_videos=False)
+                    shortcode = url.split("/p/")[1].split("/")[0]
+                    post = instaloader.Post.from_shortcode(L.context, shortcode)
+                    
+                    # Kolom Info Foto
+                    c1, c2 = st.columns([1, 2])
+                    with c1:
+                        # Tampilkan foto dari URL langsung (preview)
+                        st.image(post.url, use_container_width=True)
+                    with c2:
+                        st.markdown(f"<h3 style='color:white; margin:0;'>Instagram Photo</h3>", unsafe_allow_html=True)
+                        st.markdown(f"<p style='text-align:left; color:#888;'>User: {post.owner_username}</p>", unsafe_allow_html=True)
 
-        elif tipe == "FOTO":
-            status_box.info("📸 Mengambil foto...")
-            if os.path.exists("temp_img"): shutil.rmtree("temp_img")
-            try:
-                L = instaloader.Instaloader(save_metadata=False, download_videos=False)
-                shortcode = url.split("/p/")[1].split("/")[0]
-                post = instaloader.Post.from_shortcode(L.context, shortcode)
-                L.download_post(post, target="temp_img")
-                target = None
-                for f in os.listdir("temp_img"):
-                    if f.endswith(".jpg"):
-                        target = os.path.join("temp_img", f)
-                        break
-                if target:
-                    status_box.success("✅ Foto Siap!")
-                    with open(target, "rb") as f:
-                        st.download_button(
-                            label="⬇️ SIMPAN FOTO",
-                            data=f,
-                            file_name=f"IG_{shortcode}.jpg",
-                            mime="image/jpeg",
-                            use_container_width=True
-                        )
-                    shutil.rmtree("temp_img")
-                else:
-                    status_box.error("Foto tidak ditemukan.")
-            except Exception as e:
-                status_box.error("Gagal. Pastikan akun publik atau cek error: " + str(e))
+                    st.write("---")
+                    
+                    # Download Real
+                    L.download_post(post, target="temp_img")
+                    target = None
+                    for f in os.listdir("temp_img"):
+                        if f.endswith(".jpg"):
+                            target = os.path.join("temp_img", f)
+                            break
+                    
+                    if target:
+                        status_box.success("✅ Ready!")
+                        with open(target, "rb") as f:
+                            st.download_button(
+                                label="Download Image Now",
+                                data=f,
+                                file_name=f"IG_{shortcode}.jpg",
+                                mime="image/jpeg",
+                                use_container_width=True
+                            )
+                        shutil.rmtree("temp_img")
+                except Exception as e:
+                    st.error(f"Failed: {e}")
 
-# --- FEATURES / STEPS (three cards) ---
-st.write("---")
-st.markdown('<div class="features">', unsafe_allow_html=True)
-st.markdown('''
-<div class="card">
-  <div class="num">1</div>
-  <div class="ctitle">Temukan Video</div>
-  <div class="cdesc">Buka TikTok/IG/YT, cari video yang ingin disimpan, lalu salin tautan.</div>
-</div>
-''', unsafe_allow_html=True)
-st.markdown('''
-<div class="card">
-  <div class="num">2</div>
-  <div class="ctitle">Tempel Tautan</div>
-  <div class="cdesc">Tempel link di kolom atas, pastikan link valid.</div>
-</div>
-''', unsafe_allow_html=True)
-st.markdown('''
-<div class="card">
-  <div class="num">3</div>
-  <div class="ctitle">Download</div>
-  <div class="cdesc">Klik tombol Download, lalu simpan file ke perangkatmu.</div>
-</div>
-''', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# --- FOOTER ---
-st.markdown("""
-<div class="site-footer">
-  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-    <div>
-      <a href="#">Contacts</a>
-      <a href="#">TikTok Viewer</a>
-      <a href="#">Twitter video downloader</a>
-      <a href="#">Download video Instagram</a>
-    </div>
-    <div style="text-align:right;">
-      <div style="font-weight:700">Bahasa Indonesia ▾</div>
-    </div>
-  </div>
-  <div class="small">We are not affiliated with TikTok, Douyin or Bytedance. Created by Rifki team - video downloading experts.</div>
-  <div class="small">Copyright 2018-2026</div>
-</div>
-""", unsafe_allow_html=True)
+            st.markdown('</div>', unsafe_allow_html=True) # Tutup container
