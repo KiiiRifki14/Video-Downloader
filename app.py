@@ -107,40 +107,59 @@ header {visibility: hidden;}
 }
 
 /* 3. Input Pill Container */
-.input-pill-wrapper {
+/* Center the container */
+.pill-container-outer {
+    max-width: 800px;
+    margin: 0 auto 3rem auto;
     background: white;
     border: 1px solid var(--border-color);
     border-radius: 99px;
-    padding: 6px;
-    display: flex;
-    align-items: center;
+    padding: 8px; /* Inner padding around widgets */
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    max-width: 700px;
-    margin: 0 auto 3rem auto;
 }
-.format-dropdown {
+
+/* Pseudo dropdown styling */
+.format-box {
     background: #f0f2f5;
+    color: #333;
+    padding: 12px 20px;
     border-radius: 99px;
-    padding: 10px 20px;
     font-weight: 600;
     font-size: 14px;
-    color: #333;
-    cursor: pointer;
-    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
 }
-/* Streamlit input override */
+
+/* Layout Hacks for Streamlit Columns inside the Pill */
+/* We want columns to be tight */
+div[data-testid="column"] {
+    display: flex;
+    align-items: center; /* Vertically center items */
+    justify-content: center;
+}
+
+/* Input Field Styling */
 div[data-testid="stTextInput"] {
     width: 100%;
 }
 div[data-testid="stTextInput"] > div {
     border: none !important;
-    background: transparent !important;
+    background-color: transparent !important;
 }
 div[data-testid="stTextInput"] input {
-    color: #333 !important;
     font-size: 16px;
+    color: #333;
+    padding: 0 10px; 
 }
-/* Download Button override */
+/* Remove focus border on the input itself since wrapper has border */
+div[data-testid="stTextInput"] > div[data-baseweb="input"]:focus-within {
+    box-shadow: none !important;
+    border-color: transparent !important;
+}
+
+/* Download Button Styling */
 div[data-testid="stButton"] button {
     background: var(--accent-blue);
     color: white;
@@ -149,9 +168,15 @@ div[data-testid="stButton"] button {
     font-weight: 700;
     border: none;
     box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
-    transition: 0.2s;
+    height: 100%;
+    width: 100%;
+    white-space: nowrap;
 }
 div[data-testid="stButton"] button:hover {
+    background: var(--accent-blue-hover);
+    color: white;
+}
+div[data-testid="stButton"] button:active {
     background: var(--accent-blue-hover);
     color: white;
 }
@@ -254,6 +279,10 @@ div[data-testid="stButton"] button:hover {
     text-align: center;
     border-radius: 20px 20px 0 0;
 }
+/* Reduce standard block gap */
+div[data-testid="stVerticalBlock"] > div {
+    gap: 0.5rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -284,12 +313,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 3. Input Bar (Pill Layout)
-st.markdown('<div class="input-pill-wrapper">', unsafe_allow_html=True)
-c_fmt, c_inp, c_btn = st.columns([0.8, 3, 1])
+# 3. Input Bar (Pill Layout)
+st.markdown('<div class="pill-container-outer">', unsafe_allow_html=True)
+c_fmt, c_inp, c_btn = st.columns([1, 3.5, 1.2])
 
 with c_fmt:
     # Pseudo-dropdown visual
-    st.markdown('<div class="format-dropdown">MP4 v</div>', unsafe_allow_html=True)
+    st.markdown('<div class="format-box">MP4 ▾</div>', unsafe_allow_html=True)
 
 with c_inp:
     url_input = st.text_input("", placeholder="https://youtube.com/watch?v=...", label_visibility="collapsed")
