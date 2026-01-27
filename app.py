@@ -2,7 +2,7 @@ import streamlit as st
 import backend
 import os
 
-st.set_page_config(page_title="Loader.fo - YouTube Video Downloader", page_icon="🔵", layout="wide")
+st.set_page_config(page_title="Ki.downloader - Video Downloader", page_icon="🔵", layout="wide")
 
 # --- CSS: Light Theme, Pill Inputs, Blue Accents ---
 st.markdown("""
@@ -12,7 +12,7 @@ st.markdown("""
 :root {
   --bg-color: #ffffff;
   --text-color: #1a1a1a;
-  --accent-blue: #1877f2; /* Loader.fo Blue */
+  --accent-blue: #1877f2; /* Ki.downloader Blue */
   --accent-blue-hover: #145dbf;
   --gray-bg: #f5f7fa;
   --border-color: #e1e4e8;
@@ -45,21 +45,6 @@ header {visibility: hidden;}
 }
 .logo-text span { color: var(--accent-blue); }
 
-.nav-links {
-    display: flex;
-    gap: 20px;
-}
-.nav-link {
-    font-size: 14px;
-    font-weight: 600;
-    color: #555;
-    text-decoration: none;
-    cursor: pointer;
-}
-.nav-link.active {
-    color: var(--accent-blue);
-    border-bottom: 2px solid var(--accent-blue);
-}
 .theme-btn {
     background: var(--accent-blue);
     color: white;
@@ -118,22 +103,15 @@ header {visibility: hidden;}
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
 }
 
-/* Pseudo dropdown styling */
-.format-box {
-    background: #f0f2f5;
-    color: #333;
-    padding: 12px 20px;
-    border-radius: 99px;
-    font-weight: 600;
-    font-size: 14px;
+/* Paste Button Styling (Custom Class) */
+.paste-btn-container {
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 5px;
-    white-space: nowrap;
+    height: 100%;
 }
 
 /* Layout Hacks for Streamlit Columns inside the Pill */
-/* We want columns to be tight */
 div[data-testid="column"] {
     display: flex;
     align-items: center; /* Vertically center items */
@@ -186,12 +164,12 @@ div[data-testid="stButton"] button:active {
     background: #1a1a1a;
     color: white;
     text-align: center;
-    padding: 12px;
-    font-size: 13px;
+    padding: 8px 12px; /* Reduced padding */
+    font-size: 12px; /* Smaller font */
     font-weight: 700;
-    border-radius: 12px;
-    margin: 2rem auto;
-    max-width: 900px;
+    border-radius: 8px;
+    margin: 1rem auto; /* Reduced margin */
+    max-width: 800px; /* Reduced width */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -233,11 +211,13 @@ div[data-testid="stButton"] button:active {
     font-size: 20px;
     font-weight: 700;
     margin-bottom: 12px;
+    color: white !important;
 }
 .feature-card p {
     font-size: 14px;
     opacity: 0.9;
     line-height: 1.5;
+    color: white !important;
 }
 .arrow-icon {
     position: absolute;
@@ -287,16 +267,16 @@ div[data-testid="stVerticalBlock"] > div {
 """, unsafe_allow_html=True)
 
 # 1. Header
-col1, col2, col3 = st.columns([1,2,1])
-with col2:
+col1, col2 = st.columns([4,1])
+with col1:
     st.markdown("""
     <div class="nav-header">
-        <div class="logo-text">Loader<span>.fo</span></div>
-        <div class="nav-links">
-            <span class="nav-link active">YouTube Video Downloader</span>
-            <span class="nav-link">YouTube to MP3</span>
-            <span class="nav-link">YouTube Short</span>
-        </div>
+        <div class="logo-text">Ki<span>.downloader</span></div>
+    </div>
+    """, unsafe_allow_html=True)
+with col2:
+     st.markdown("""
+    <div class="nav-header" style="justify-content: flex-end;">
         <button class="theme-btn">Dark 🌙</button>
     </div>
     """, unsafe_allow_html=True)
@@ -304,25 +284,26 @@ with col2:
 # 2. Hero
 st.markdown("""
 <div class="hero-section">
-    <div class="hero-title">YouTube Video <span>Downloader</span></div>
+    <div class="hero-title">Video <span>Downloader</span></div>
     <div class="hero-desc">
-        Try this unique tool for quick, hassle-free downloads from YouTube. 
+        Try this unique tool for quick, hassle-free downloads. 
         Transform your offline video collection with this reliable and efficient downloader.
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # 3. Input Bar (Pill Layout)
-# 3. Input Bar (Pill Layout)
 st.markdown('<div class="pill-container-outer">', unsafe_allow_html=True)
-c_fmt, c_inp, c_btn = st.columns([1, 3.5, 1.2])
-
-with c_fmt:
-    # Pseudo-dropdown visual
-    st.markdown('<div class="format-box">MP4 ▾</div>', unsafe_allow_html=True)
+c_inp, c_paste, c_btn = st.columns([3, 0.5, 1])
 
 with c_inp:
+    # Input field
     url_input = st.text_input("", placeholder="https://youtube.com/watch?v=...", label_visibility="collapsed")
+
+with c_paste:
+    # Automatic Paste Button (Visual placeholder or functional if possible locally)
+    # Since we can't easily paste from clipboard in pure Streamlit web, we add the button as requested.
+    st.button("📋", help="Paste from clipboard (Ctrl+V)")
 
 with c_btn:
     dl_clicked = st.button("Download")
@@ -347,9 +328,6 @@ if dl_clicked and url_input:
                 st.markdown(f'<div class="res-title">{title}</div>', unsafe_allow_html=True)
                 st.markdown('<div class="res-meta">Format: MP4 (Best)</div>', unsafe_allow_html=True)
                 
-                # Auto download logic or Button?
-                # The "Download" button usually starts the process mostly.
-                # Let's show a "Save" button to finalize.
                 if st.button("Save Video", key="save_video"):
                      path = backend.download_video(url_input)
                      if path:
@@ -375,57 +353,57 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 5. Info Section
+# Fixed indentation to prevent leaking code
 st.markdown("""
 <div class="info-section">
-    <div class="section-title">What is <span>loader.fo</span></div>
-    <p style="color:#666; max-width:700px; margin:0 auto;">
-        loader.fo is one of the most popular downloader tools on the internet. 
-        With this tool, you can download and convert videos from almost anywhere on the internet.
-    </p>
-    
-    <div class="feature-grid">
-        <div class="feature-card">
-            <h3>Experience Buffer-Free Entertainment With YouTube Video Downloader</h3>
-            <p>The YouTube Video Downloader provides uninterrupted entertainment and buffer-free experience for your favorite YouTube content. This user-friendly tool allows you to download videos effortlessly.</p>
-            <div class="arrow-icon">></div>
-        </div>
-        <div class="feature-card">
-            <h3>Your One-Stop Solution to YouTube Video Downloading</h3>
-            <p>Tired of those annoying buffering pauses ruining your YouTube binge? Well, say hello to uninterrupted entertainment with loader.fo! This nifty tool not only lets you download...</p>
-            <div class="arrow-icon">></div>
-        </div>
-    </div>
+<div class="section-title">What is <span>Ki.downloader</span></div>
+<p style="color:#666; max-width:700px; margin:0 auto;">
+Ki.downloader is one of the most popular downloader tools on the internet. 
+With this tool, you can download and convert videos from almost anywhere on the internet.
+</p>
+<div class="feature-grid">
+<div class="feature-card">
+<h3>Experience Buffer-Free Entertainment With Video Downloader</h3>
+<p>The Video Downloader provides uninterrupted entertainment and buffer-free experience for your favorite content. This user-friendly tool allows you to download videos effortlessly.</p>
+<div class="arrow-icon">></div>
+</div>
+<div class="feature-card">
+<h3>Your One-Stop Solution to Video Downloading</h3>
+<p>Tired of those annoying buffering pauses ruining your binge? Well, say hello to uninterrupted entertainment with Ki.downloader! This nifty tool not only lets you download...</p>
+<div class="arrow-icon">></div>
+</div>
+</div>
 </div>
 """, unsafe_allow_html=True)
 
 # 6. FAQ (Visual Only)
 st.markdown("""
 <div class="info-section" style="margin-top:5rem;">
-    <div class="section-title">Frequently Asked <span>Questions</span></div>
-    <div style="display:flex; justify-content:center; gap:40px; text-align:left;">
-        <div style="flex:1; background:#f9f9f9; padding:20px; border-radius:12px;">
-            <h4>YouTubeDownloader: FAQs ❓</h4>
-            <p style="font-size:14px; color:#555;">Are there any subscription plans?</p>
-            <hr style="border:0; border-top:1px solid #ddd;">
-            <p style="font-size:14px; color:#555;">Can the downloader be used without info?</p>
-        </div>
-        <div style="flex:1; background:#f9f9f9; padding:20px; border-radius:12px;">
-            <h4>loader.fo: FAQs ❓</h4>
-            <p style="font-size:14px; color:#555;">Is it a one-time purchase?</p>
-            <hr style="border:0; border-top:1px solid #ddd;">
-            <p style="font-size:14px; color:#555;">Can the downloader be used safely?</p>
-        </div>
-    </div>
+<div class="section-title">Frequently Asked <span>Questions</span></div>
+<div style="display:flex; justify-content:center; gap:40px; text-align:left;">
+<div style="flex:1; background:#f9f9f9; padding:20px; border-radius:12px;">
+<h4>VideoDownloader: FAQs ❓</h4>
+<p style="font-size:14px; color:#555;">Are there any subscription plans?</p>
+<hr style="border:0; border-top:1px solid #ddd;">
+<p style="font-size:14px; color:#555;">Can the downloader be used without info?</p>
+</div>
+<div style="flex:1; background:#f9f9f9; padding:20px; border-radius:12px;">
+<h4>Ki.downloader: FAQs ❓</h4>
+<p style="font-size:14px; color:#555;">Is it a one-time purchase?</p>
+<hr style="border:0; border-top:1px solid #ddd;">
+<p style="font-size:14px; color:#555;">Can the downloader be used safely?</p>
+</div>
+</div>
 </div>
 """, unsafe_allow_html=True)
 
 # 7. Dark Footer
 st.markdown("""
 <div class="footer-dark">
-    <h2>loader.fo</h2>
-    <p>Copyright © 2026 All Rights Reserved</p>
-    <div style="margin-top:20px; font-size:12px; color:#555;">
-        English • Deutsch • Polski • Français • Español • Bahasa Indonesia
-    </div>
+<h2>Ki.downloader</h2>
+<p>Copyright © 2026 All Rights Reserved</p>
+<div style="margin-top:20px; font-size:12px; color:#555;">
+English • Deutsch • Polski • Français • Español • Bahasa Indonesia
+</div>
 </div>
 """, unsafe_allow_html=True)
