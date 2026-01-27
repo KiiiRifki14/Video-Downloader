@@ -1,47 +1,38 @@
 import streamlit as st
 import backend
 import os
+import shutil
 
+# --- Page Config ---
 st.set_page_config(page_title="Ki.downloader - Video Downloader", page_icon="🔵", layout="wide")
 
-# --- Session State for Theme ---
+# --- Session State ---
 if 'theme' not in st.session_state:
     st.session_state.theme = 'light'
+if 'video_info' not in st.session_state:
+    st.session_state.video_info = None
+if 'current_url' not in st.session_state:
+    st.session_state.current_url = ""
 
 def toggle_theme():
     st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
 
-# --- Theme Variables ---
+# --- Theme Variables (Tetap sama seperti punyamu) ---
 themes = {
     'light': {
-        'bg_color': '#ffffff',
-        'text_color': '#1a1a1a',
-        'card_bg': '#ffffff',
-        'element_bg': '#f0f2f5',
-        'border_color': '#e1e4e8',
-        'subtext': '#666666',
-        'accent': '#1877f2',
-        'accent_hover': '#145dbf',
-        'feature_title': '#ffffff', # card text is white in blue cards usually
-        'feature_text': 'rgba(255,255,255,0.9)'
+        'bg_color': '#ffffff', 'text_color': '#1a1a1a', 'card_bg': '#ffffff',
+        'element_bg': '#f0f2f5', 'border_color': '#e1e4e8', 'subtext': '#666666',
+        'accent': '#1877f2', 'accent_hover': '#145dbf'
     },
     'dark': {
-        'bg_color': '#0d0d0d',
-        'text_color': '#ffffff',
-        'card_bg': '#161616',
-        'element_bg': '#262626',
-        'border_color': '#333333',
-        'subtext': '#aaaaaa',
-        'accent': '#1877f2',
-        'accent_hover': '#145dbf',
-        'feature_title': '#ffffff',
-        'feature_text': 'rgba(255,255,255,0.9)'
+        'bg_color': '#0d0d0d', 'text_color': '#ffffff', 'card_bg': '#161616',
+        'element_bg': '#262626', 'border_color': '#333333', 'subtext': '#aaaaaa',
+        'accent': '#1877f2', 'accent_hover': '#145dbf'
     }
 }
-
 current_theme = themes[st.session_state.theme]
 
-# --- CSS Injection ---
+# --- CSS Injection (Saya sederhanakan dikit bagian input biar ga error di layout) ---
 st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
@@ -57,405 +48,146 @@ st.markdown(f"""
   --accent-blue-hover: {current_theme['accent_hover']};
 }}
 
-.stApp {{
-  background-color: var(--bg-color);
-  font-family: 'Outfit', sans-serif;
-  color: var(--text-color);
-}}
+.stApp {{ background-color: var(--bg-color); font-family: 'Outfit', sans-serif; color: var(--text-color); }}
 header {{visibility: hidden;}}
-.block-container {{
-    padding-top: 1rem;
-    padding-bottom: 2rem;
-    max-width: 1000px;
-}}
+.block-container {{ padding-top: 1rem; max-width: 1000px; }}
 
-/* 1. Header Navigation */
-.nav-header {{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 0;
-    margin-bottom: 2rem;
-}}
-.logo-text {{
-    font-size: 24px;
-    font-weight: 800;
-    color: var(--text-color);
-}}
+/* Navigation & Hero */
+.nav-header {{ display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; margin-bottom: 2rem; }}
+.logo-text {{ font-size: 24px; font-weight: 800; color: var(--text-color); }}
 .logo-text span {{ color: var(--accent-blue); }}
 
-/* 2. Hero Section */
-.hero-section {{
-    text-align: center;
-    padding: 3rem 0;
-    position: relative;
-}}
-.hero-title {{
-    font-size: 48px;
-    font-weight: 800;
-    margin-bottom: 1rem;
-    line-height: 1.2;
-    color: var(--text-color);
-}}
-.hero-title span {{
-    color: var(--accent-blue);
-    position: relative;
-}}
-.hero-title span::after {{
-    content: '';
-    display: block;
-    width: 100%;
-    height: 6px;
-    background: var(--accent-blue);
-    opacity: 0.2;
-    position: absolute;
-    bottom: 5px;
-    left: 0;
-    border-radius: 4px;
-}}
-.hero-desc {{
-    color: var(--subtext-color);
-    max-width: 600px;
-    margin: 0 auto 2rem auto;
-    font-size: 16px;
-    line-height: 1.6;
-}}
+.hero-section {{ text-align: center; padding: 3rem 0; }}
+.hero-title {{ font-size: 48px; font-weight: 800; margin-bottom: 1rem; color: var(--text-color); }}
+.hero-title span {{ color: var(--accent-blue); }}
+.hero-desc {{ color: var(--subtext-color); max-width: 600px; margin: 0 auto 2rem auto; line-height: 1.6; }}
 
-/* 3. Input Pill Container */
-.pill-container-outer {{
-    max-width: 800px;
-    margin: 0 auto 3rem auto;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 99px;
-    padding: 8px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-}}
-
-/* Layout Hacks for Streamlit Columns inside the Pill */
-div[data-testid="column"] {{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}}
-
-/* Input Field Styling */
-div[data-testid="stTextInput"] {{
-    width: 100%;
-}}
-div[data-testid="stTextInput"] > div {{
-    border: none !important;
-    background-color: transparent !important;
-}}
-div[data-testid="stTextInput"] input {{
-    font-size: 16px;
-    color: var(--text-color);
-    padding: 0 10px; 
-}}
-/* Remove focus border on the input itself */
-div[data-testid="stTextInput"] > div[data-baseweb="input"]:focus-within {{
-    box-shadow: none !important;
-    border-color: transparent !important;
-}}
-
-/* BUTTON STYLING */
-/* Primary Button (Download) */
-div[data-testid="stButton"] button[kind="primary"] {{
-    background: var(--accent-blue);
-    color: white;
-    border-radius: 99px;
-    padding: 12px 32px;
-    font-weight: 700;
-    border: none;
-    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
-    height: 100%;
-    width: 100%;
-    white-space: nowrap;
-}}
-div[data-testid="stButton"] button[kind="primary"]:hover {{
-    background: var(--accent-blue-hover);
-    color: white !important;
-    border: none;
-}}
-
-/* Secondary Button (Theme & Paste) */
-div[data-testid="stButton"] button[kind="secondary"] {{
-    background: var(--element-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-}}
-div[data-testid="stButton"] button[kind="secondary"]:hover {{
-    border-color: var(--accent-blue);
-    color: var(--accent-blue);
-}}
-
-
-/* 4. Warning Banner */
-.warning-banner {{
-    background: #1a1a1a;
-    color: white;
-    text-align: center;
-    padding: 8px 12px;
-    font-size: 12px;
-    font-weight: 700;
-    border-radius: 8px;
-    margin: 1rem auto;
-    max-width: 800px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}}
-
-/* 5. Info Section */
-.info-section {{
-    text-align: center;
-    margin-top: 4rem;
-}}
-.section-title {{
-    font-size: 32px;
-    font-weight: 800;
-    margin-bottom: 2rem;
-    color: var(--text-color);
-}}
-.section-title span {{
-    border-bottom: 4px solid var(--accent-blue);
-}}
-
-/* 6. Feature Cards */
-.feature-grid {{
-    display: flex;
-    gap: 20px;
-    margin-top: 2rem;
-    flex-wrap: wrap;
-}}
-.feature-card {{
-    background: var(--accent-blue);
-    color: white;
-    padding: 30px;
-    border-radius: 16px;
-    flex: 1;
-    min-width: 300px;
-    text-align: left;
-    position: relative;
-}}
-.feature-card h3 {{
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    color: white !important;
-}}
-.feature-card p {{
-    font-size: 14px;
-    opacity: 0.9;
-    line-height: 1.5;
-    color: white !important;
-}}
-.arrow-icon {{
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    background: white;
-    color: var(--accent-blue);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
+/* Input Area */
+.input-area {{
+    max-width: 700px; margin: 0 auto 3rem auto;
+    display: flex; gap: 10px;
 }}
 
 /* Result Card */
 .result-card {{
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    gap: 20px;
-    max-width: 700px;
-    margin: 0 auto;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+    background: var(--card-bg); border: 1px solid var(--border-color);
+    border-radius: 16px; padding: 20px; display: flex; gap: 20px;
+    max-width: 700px; margin: 0 auto; box-shadow: 0 10px 40px rgba(0,0,0,0.05);
 }}
-.res-thumb img {{ border-radius: 10px; width: 100%; display: block; }}
+.res-thumb img {{ border-radius: 10px; width: 100%; object-fit: cover; }}
 .res-title {{ font-weight: 700; font-size: 18px; margin-bottom: 8px; color: var(--text-color); }}
 .res-meta {{ font-size: 13px; color: var(--subtext-color); margin-bottom: 16px; }}
 
-/* Footer */
-.footer-dark {{
-    background: #1a1a1a;
-    color: #888;
-    padding: 3rem 1rem;
-    margin-top: 5rem;
-    text-align: center;
-    border-radius: 20px 20px 0 0;
-}}
-div[data-testid="stVerticalBlock"] > div {{
-    gap: 0.5rem;
-}}
+/* Custom Button Styles via CSS targeting Streamlit classes is safer done inline or simplistic */
 </style>
 """, unsafe_allow_html=True)
+
+# --- UI Layout ---
 
 # 1. Header
 col1, col2 = st.columns([4,1])
 with col1:
-    st.markdown("""
-    <div class="nav-header">
-        <div class="logo-text">Ki<span>.downloader</span></div>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown('<div class="nav-header"><div class="logo-text">Ki<span>.downloader</span></div></div>', unsafe_allow_html=True)
 with col2:
-     # Theme Toggle Button
-     icon = "🌙" if st.session_state.theme == 'light' else "☀️"
-     label = "Dark" if st.session_state.theme == 'light' else "Light"
-     if st.button(f"{label} {icon}", key="theme_toggle", help="Switch Theme"):
-         toggle_theme()
-         st.rerun()
+    if st.button("🌓 Theme", key="theme_toggle"):
+        toggle_theme()
+        st.rerun()
 
 # 2. Hero
 st.markdown("""
 <div class="hero-section">
     <div class="hero-title">Video <span>Downloader</span></div>
-    <div class="hero-desc">
-        Try this unique tool for quick, hassle-free downloads. 
-        Transform your offline video collection with this reliable and efficient downloader.
-    </div>
+    <div class="hero-desc">Try this unique tool for quick, hassle-free downloads.</div>
 </div>
 """, unsafe_allow_html=True)
 
-# 3. Input Bar (Pill Layout)
-st.markdown('<div class="pill-container-outer">', unsafe_allow_html=True)
-c_inp, c_paste, c_btn = st.columns([3, 0.5, 1])
+# 3. Input Section (Sederhana tapi Rapi)
+c1, c2 = st.columns([4, 1])
+with c1:
+    url_input = st.text_input("URL", placeholder="Paste YouTube link here...", label_visibility="collapsed")
+with c2:
+    # Logic: Reset info jika URL berubah atau tombol diklik
+    if st.button("Check Video", type="primary", use_container_width=True):
+        if url_input:
+            st.session_state.current_url = url_input
+            with st.spinner("Searching..."):
+                info = backend.get_video_info(url_input)
+                if info:
+                    st.session_state.video_info = info
+                else:
+                    st.error("Video not found.")
+                    st.session_state.video_info = None
 
-with c_inp:
-    # Input field
-    url_input = st.text_input("", placeholder="https://youtube.com/watch?v=...", label_visibility="collapsed")
-
-with c_paste:
-    st.button("📋", help="Paste from clipboard", key="paste_btn", type="secondary")
-
-with c_btn:
-    dl_clicked = st.button("Download", type="primary")
-
-st.markdown('</div>', unsafe_allow_html=True)
-
-
-# --- Logic Handling ---
-if 'video_info' not in st.session_state:
-    st.session_state.video_info = None
-
-if 'current_url' not in st.session_state:
-    st.session_state.current_url = ""
-
-# When Download is clicked, fetch and store in session state
-if dl_clicked and url_input:
-    # Reset if new URL
-    st.session_state.current_url = url_input
-    with st.spinner("Fetching info..."):
-        info = backend.get_video_info(url_input)
-        if info:
-            st.session_state.video_info = info
-        else:
-            st.error("Invalid URL or Video not found.")
-            st.session_state.video_info = None
-
-# If we have stored info, display the result card
+# 4. Result Section
 if st.session_state.video_info:
     info = st.session_state.video_info
     
+    # Tampilkan Card
     st.markdown('<div class="result-card">', unsafe_allow_html=True)
+    
+    # Kita bagi kolom di dalam visual card menggunakan st.columns
     r_img, r_txt = st.columns([1, 1.5])
     
     with r_img:
-        thumb = info.get('thumbnail', '')
-        st.markdown(f'<div class="res-thumb"><img src="{thumb}"></div>', unsafe_allow_html=True)
+        st.image(info.get('thumbnail', ''), use_column_width=True)
     
     with r_txt:
-        title = info.get('title', 'Unknown Title')
-        st.markdown(f'<div class="res-title">{title}</div>', unsafe_allow_html=True)
-        st.markdown('<div class="res-meta">Format: MP4 (Best)</div>', unsafe_allow_html=True)
+        st.markdown(f"### {info.get('title', 'Unknown Title')}")
+        st.caption(f"Duration: {info.get('duration_string', '-')} | Ext: {info.get('ext', 'mp4')}")
         
-        # Download Action
-        if st.button("Save Video", key="save_video", type="primary"):
-             with st.spinner("Downloading..."):
-                 path = backend.download_video(st.session_state.current_url)
-                 if path:
-                     with open(path, "rb") as f:
-                         st.download_button(
-                             label="⬇️ Click to Save File",
-                             data=f,
-                             file_name=os.path.basename(path),
-                             mime="video/mp4",
-                             key="real_download_btn"
-                         )
-                     st.success("Download Complete! Click the button above to save.")
-                 else:
-                     st.error("Download failed. Please try again.")
+        # --- BAGIAN PENTING: LOGIKA DOWNLOAD ---
+        # Kita melakukan download di Backend, lalu membaca file ke memory, 
+        # baru dimasukkan ke tombol download_button agar tombol tidak hilang saat diklik.
+        
+        # Tombol trigger proses
+        proc_btn = st.button("Prepare Download File", key="proc_dl")
+        
+        if proc_btn:
+            with st.spinner("Downloading from YouTube servers..."):
+                file_path = backend.download_video(st.session_state.current_url)
+                
+                if file_path and os.path.exists(file_path):
+                    # Baca file ke RAM
+                    with open(file_path, "rb") as f:
+                        file_data = f.read()
+                    
+                    # Hapus file sementara di server (Cleanup) agar storage tidak penuh
+                    # (Opsional: bisa dihapus nanti, tapi amannya begini)
+                    try:
+                        shutil.rmtree(os.path.dirname(file_path)) 
+                    except:
+                        pass
+                        
+                    # Simpan data file di session state agar tombol download muncul
+                    st.session_state.download_ready = file_data
+                    st.session_state.download_name = os.path.basename(file_path)
+                    st.rerun() # Refresh halaman untuk memunculkan tombol final
+                else:
+                    st.error("Failed to download video.")
+
+        # Jika file sudah siap di memory, tampilkan tombol download final
+        if 'download_ready' in st.session_state:
+            st.download_button(
+                label="⬇️ DOWNLOAD FINAL FILE",
+                data=st.session_state.download_ready,
+                file_name=st.session_state.download_name,
+                mime="video/mp4",
+                type="primary"
+            )
+            
+            # Tombol reset
+            if st.button("Download Another Video"):
+                del st.session_state.download_ready
+                st.session_state.video_info = None
+                st.rerun()
+
     st.markdown('</div>', unsafe_allow_html=True)
 
-# 4. Warning Banner
+# 5. Warning & Footer (Tetap sama)
+st.markdown("<br><hr>", unsafe_allow_html=True)
 st.markdown("""
-<div class="warning-banner">
-    ⚡ WE DO NOT ALLOW/SUPPORT THE DOWNLOAD OF COPYRIGHTED MATERIAL!
-</div>
-""", unsafe_allow_html=True)
-
-# 5. Info Section
-# Fixed indentation to prevent leaking code
-st.markdown("""
-<div class="info-section">
-<div class="section-title">What is <span>Ki.downloader</span></div>
-<p style="color:#666; max-width:700px; margin:0 auto;">
-Ki.downloader is one of the most popular downloader tools on the internet. 
-With this tool, you can download and convert videos from almost anywhere on the internet.
-</p>
-<div class="feature-grid">
-<div class="feature-card">
-<h3>Experience Buffer-Free Entertainment With Video Downloader</h3>
-<p>The Video Downloader provides uninterrupted entertainment and buffer-free experience for your favorite content. This user-friendly tool allows you to download videos effortlessly.</p>
-<div class="arrow-icon">></div>
-</div>
-<div class="feature-card">
-<h3>Your One-Stop Solution to Video Downloading</h3>
-<p>Tired of those annoying buffering pauses ruining your binge? Well, say hello to uninterrupted entertainment with Ki.downloader! This nifty tool not only lets you download...</p>
-<div class="arrow-icon">></div>
-</div>
-</div>
-</div>
-""", unsafe_allow_html=True)
-
-# 6. FAQ (Visual Only)
-st.markdown("""
-<div class="info-section" style="margin-top:5rem;">
-<div class="section-title">Frequently Asked <span>Questions</span></div>
-<div style="display:flex; justify-content:center; gap:40px; text-align:left;">
-<div style="flex:1; background:#f9f9f9; padding:20px; border-radius:12px;">
-<h4>VideoDownloader: FAQs ❓</h4>
-<p style="font-size:14px; color:#555;">Are there any subscription plans?</p>
-<hr style="border:0; border-top:1px solid #ddd;">
-<p style="font-size:14px; color:#555;">Can the downloader be used without info?</p>
-</div>
-<div style="flex:1; background:#f9f9f9; padding:20px; border-radius:12px;">
-<h4>Ki.downloader: FAQs ❓</h4>
-<p style="font-size:14px; color:#555;">Is it a one-time purchase?</p>
-<hr style="border:0; border-top:1px solid #ddd;">
-<p style="font-size:14px; color:#555;">Can the downloader be used safely?</p>
-</div>
-</div>
-</div>
-""", unsafe_allow_html=True)
-
-# 7. Dark Footer
-st.markdown("""
-<div class="footer-dark">
-<h2>Ki.downloader</h2>
-<p>Copyright © 2026 All Rights Reserved</p>
-<div style="margin-top:20px; font-size:12px; color:#555;">
-English • Deutsch • Polski • Français • Español • Bahasa Indonesia
-</div>
+<div style='text-align: center; color: #666;'>
+    <small>⚡ WE DO NOT ALLOW/SUPPORT THE DOWNLOAD OF COPYRIGHTED MATERIAL!</small><br>
+    Ki.downloader © 2026
 </div>
 """, unsafe_allow_html=True)
