@@ -52,7 +52,7 @@ header {visibility: hidden;}
     gap: 8px;
 }
 .logo span { color: #fff; }
-.logo .highlight { color: #378CE7; } /* .fo equivalent color */
+.logo .highlight { color: #378CE7; } 
 
 /* Nav Icons Bar (Horizontal) */
 .nav-bar {
@@ -87,7 +87,6 @@ header {visibility: hidden;}
 .nav-item:hover {
     color: #fff;
 }
-.nav-icon { font-size: 16px; }
 
 /* 2. Hero Section */
 .hero-container {
@@ -101,7 +100,6 @@ header {visibility: hidden;}
     line-height: 1.2;
 }
 .hero-title span {
-    color: #378CE7; /* Fallback */
     background: var(--accent-gradient);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -126,53 +124,44 @@ header {visibility: hidden;}
     border: 1px solid rgba(255,255,255,0.05);
 }
 
-/* 3. Input Area */
-.url-input-container {
-    background: var(--card-bg);
-    border-radius: 16px;
-    padding: 8px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    border: 1px solid #333;
-    max-width: 700px;
-    margin: 0 auto 3rem auto;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+/* 3. Input Styling - Target Streamlit Widget directly for the 'Box' look */
+div[data-testid="stTextInput"] {
+    background-color: var(--card-bg) !important;
+    border: 1px solid #333 !important;
+    border-radius: 14px !important;
+    padding: 2px 10px !important;
+    transition: 0.3s;
 }
-.link-icon-box {
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #888;
+div[data-testid="stTextInput"]:focus-within {
+    border-color: var(--accent-color) !important;
+    box-shadow: 0 0 15px rgba(83, 86, 255, 0.2);
 }
-/* Streamlit text input override */
-.stTextInput {
+div[data-testid="stTextInput"] > div {
+    background-color: transparent !important;
+    border: none !important;
+    color: white !important;
+}
+div[data-testid="stTextInput"] input {
+    color: white !important;
+    font-size: 15px;
+}
+
+/* Custom 'Go' Button Styling */
+div[data-testid="stButton"] button {
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 2px; /* Alignment fix */
     width: 100%;
 }
-.stTextInput > div > div > input {
-    background-color: transparent;
-    color: #fff;
-    border: none;
-    font-size: 16px;
-}
-/* Focus state override */
-.stTextInput > div > div > input:focus {
-    box-shadow: none;
-    border: none;
-}
-.paste-btn-wrapper {
-    background: #378CE7; /* Fallback */
-    background: var(--accent-gradient);
-    width: 50px;
-    height: 50px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
+div[data-testid="stButton"] button:hover {
+    border-color: transparent !important;
+    color: white !important;
+    opacity: 0.9;
 }
 
 /* 4. Result Card */
@@ -181,44 +170,29 @@ header {visibility: hidden;}
     border: 1px solid #333;
     border-radius: 20px;
     padding: 24px;
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
-    max-width: 700px;
-    margin: 0 auto;
+    margin-top: 2rem;
 }
-.result-thumb {
-    width: 240px;
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-    flex-shrink: 0;
-}
+/* Flex is hard with Streamlit columns, we rely on layout but style the contents */
 .result-thumb img {
-    width: 100%;
-    display: block;
     border-radius: 12px;
-}
-.result-info {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    display: block;
+    width: 100%;
 }
 .video-title {
     font-size: 18px;
     font-weight: 700;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     line-height: 1.4;
+    color: #fff;
 }
 .video-meta-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
     background: rgba(0,0,0,0.3);
     padding: 10px 16px;
     border-radius: 8px;
+    margin-bottom: 1rem;
 }
 .format-tag {
     font-weight: 600;
@@ -226,6 +200,7 @@ header {visibility: hidden;}
     display: flex;
     align-items: center;
     gap: 6px;
+    color: #fff;
 }
 .size-tag {
     color: #fff;
@@ -234,31 +209,12 @@ header {visibility: hidden;}
 .add-format-link {
     color: #378CE7;
     font-size: 13px;
-    text-decoration: none;
-    margin-bottom: 1rem;
-    display: inline-block;
     cursor: pointer;
+    margin-bottom: 1rem;
+    display: block;
 }
 
-/* Custom Button Styling via Styler is hard, we use st.button but inject style to target it */
-div[data-testid="stButton"] button {
-    width: 100%;
-    background: var(--accent-gradient);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 16px;
-    transition: 0.2s;
-}
-div[data-testid="stButton"] button:hover {
-    opacity: 0.9;
-    border: none;
-    color: white;
-}
-
-/* Footer Details */
+/* Footer */
 .footer-details {
     margin-top: 5rem;
     color: var(--text-muted);
@@ -272,14 +228,6 @@ div[data-testid="stButton"] button:hover {
     font-size: 14px;
     line-height: 1.6;
 }
-
-/* Floating Shapes (Background decoration) */
-.shape {
-    position: fixed;
-    z-index: -1;
-    opacity: 0.3;
-    pointer-events: none;
-}
 </style>
 """, unsafe_allow_html=True)
 
@@ -288,7 +236,6 @@ st.markdown("""
 <div class="top-header">
     <div class="logo">Loader<span>.fo</span></div>
     <div style="display:flex; gap:10px;">
-        <!-- Theme toggle placeholder -->
         <span style="font-size:18px;">🌙</span>
     </div>
 </div>
@@ -319,144 +266,127 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# --- Input Area ---
+# Styled using CSS targeting stTextInput and stButton
+c_input, c_btn = st.columns([4, 1])
+with c_input:
+    # Emoji used as icon prefix in placeholder/label not easy, 
+    # relying on the CSS style of the container to look 'premium'
+    url = st.text_input("", placeholder="🔗  Paste URL here...", label_visibility="collapsed")
 
-# --- Input row: URL input with clipboard icon and Download button ---
-col1, col2 = st.columns([3,1])
-with col1:
-    st.markdown('<div class="input-row">', unsafe_allow_html=True)
-    # custom input container
-    st.markdown('<div class="input-box">', unsafe_allow_html=True)
-    st.markdown('<div class="clip-icon">📋</div>', unsafe_allow_html=True)
-    url = st.text_input("", placeholder="Paste URL", key="url_input")
-    st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-with col2:
-    # primary download button (will trigger backend)
-    download_click = st.button("Download", key="download_primary", help="Download selected format", args=None)
+with c_btn:
+    check_click = st.button("Download")
 
-# --- Preview card (static until we fetch info) ---
-# We'll show a sample preview if URL present; otherwise show placeholder
-def sample_thumbnail_bytes():
-    # return None to use placeholder color box
-    return None
-
+# --- Logic & Result Area ---
 if url:
-    # Try to fetch metadata via yt_dlp (lightweight extract only)
-    preview_title = "Unknown video"
-    preview_thumb = None
-    selected_format = "MP4 1080p"
-    filesize = "—"
+    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+    c_thumb, c_info = st.columns([1.2, 2])
+    
+    # 1. Fetch Info
+    info = None
+    preview_title = "Loading..."
+    preview_thumb = ""
+    selected_format_label = "MP4 1080p" # Fallback
+    file_size_str = "Calculating..."
+    
     try:
         ydl_opts = {"quiet": True, "skip_download": True}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            # lightweight fetch
             info = ydl.extract_info(url, download=False)
-            preview_title = info.get("title", preview_title)
-            preview_thumb = info.get("thumbnail")
-            # pick a best format label if available
+            preview_title = info.get("title", "Unknown Video")
+            preview_thumb = info.get("thumbnail", "")
+            
+            # Find best format details
             formats = info.get("formats", [])
-            # try to find 1080p mp4
+            # Priority: MP4 1080p -> MP4 720p -> Best MP4
+            best = None
             for f in reversed(formats):
-                if f.get("ext") == "mp4" and f.get("height") == 1080:
-                    selected_format = "MP4 1080p"
-                    filesize = f.get("filesize") or f.get("filesize_approx") or filesize
+                if f.get("ext") == "mp4" and f.get("height", 0) >= 1080:
+                    best = f
+                    selected_format_label = "MP4 1080p"
                     break
-            # fallback: first mp4
-            if filesize == "—":
-                for f in formats:
-                    if f.get("ext") == "mp4":
-                        filesize = f.get("filesize") or f.get("filesize_approx") or filesize
-                        selected_format = f.get("format_note") or selected_format
+            if not best:
+                for f in reversed(formats):
+                     if f.get("ext") == "mp4":
+                        best = f
+                        selected_format_label = "MP4 Auto"
                         break
-            # humanize filesize
-            if isinstance(filesize, (int, float)):
-                for unit in ['B','KB','MB','GB']:
-                    if filesize < 1024:
-                        filesize = f"{filesize:.1f} {unit}"
-                        break
-                    filesize /= 1024
-    except Exception:
-        preview_title = "Preview unavailable"
-
-    # render preview
-    st.markdown('<div class="preview">', unsafe_allow_html=True)
-    if preview_thumb:
-        st.markdown(f'<div class="thumb"><img src="{preview_thumb}" alt="thumb"></div>', unsafe_allow_html=True)
-    else:
-        st.markdown('<div class="thumb"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="preview-meta">', unsafe_allow_html=True)
-    st.markdown(f'<div class="preview-title">{preview_title}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="preview-sub">Selected: <strong>{selected_format}</strong> • Size: {filesize}</div>', unsafe_allow_html=True)
-
-    # format pills and add another format
-    st.markdown('<div class="format-row">', unsafe_allow_html=True)
-    formats_to_show = ["MP4 1080p", "MP4 720p", "MP4 480p", "MP3 128kbps"]
-    for f in formats_to_show:
-        cls = "format-pill selected" if f == selected_format else "format-pill"
-        st.markdown(f'<div class="{cls}">{f}</div>', unsafe_allow_html=True)
-    st.markdown(f'<div class="add-format">+ Add another format</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-else:
-    # placeholder preview
-    st.markdown('<div class="preview">', unsafe_allow_html=True)
-    st.markdown('<div class="thumb"></div>', unsafe_allow_html=True)
-    st.markdown('<div class="preview-meta">', unsafe_allow_html=True)
-    st.markdown('<div class="preview-title">Paste a valid YouTube URL to see preview</div>', unsafe_allow_html=True)
-    st.markdown('<div class="preview-sub">Supported formats: MP4, MP3, WAV, 4K</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# --- Backend download handling (triggered by button) ---
-if download_click:
-    if not url:
-        st.warning("⚠️ Masukkan URL terlebih dahulu.")
-    else:
-        status = st.empty()
-        progress = st.progress(0)
-        status.info("Preparing download...")
-        # choose default ydl options for mp4 best
-        outtmpl = "temp_download.%(ext)s"
-        ydl_opts = {
-            "format": "bestvideo+bestaudio/best",
-            "outtmpl": outtmpl,
-            "quiet": True,
-            "noplaylist": True,
-        }
-        try:
-            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                progress.progress(20)
-                info = ydl.extract_info(url, download=True)
-                progress.progress(80)
-                # find downloaded file
-                ext = info.get("ext", "mp4")
-                filename = f"temp_download.{ext}"
-                if not os.path.exists(filename):
-                    # try to find any temp file
-                    candidates = list(Path(".").glob("temp_download.*"))
-                    filename = str(candidates[0]) if candidates else None
-                if filename and os.path.exists(filename):
-                    status.success("✅ Siap diunduh")
-                    with open(filename, "rb") as f:
-                        st.download_button(
-                            label=f"⬇️ Download {info.get('title','video')}.{ext}",
-                            data=f,
-                            file_name=f"{info.get('title','video')}.{ext}",
-                            mime=f"video/{ext}",
-                            use_container_width=True
-                        )
-                    # cleanup optional
-                    # os.remove(filename)
+            
+            if best:
+                val = best.get('filesize') or best.get('filesize_approx') or 0
+                if val > 0:
+                    file_size_str = f"{val/1024/1024:.1f} MB"
                 else:
-                    status.error("File tidak ditemukan setelah proses.")
-                progress.progress(100)
-        except Exception as e:
-            status.error("Gagal mengunduh: " + str(e))
-            progress.progress(0)
+                    file_size_str = "~ MB"
+            
+    except Exception as e:
+        preview_title = "Video not found or unavailable"
+        st.error(f"Error fetching video: {e}")
 
-# --- Informational section (like reference) ---
-st.markdown("---")
-st.markdown("#### YouTube Video Downloader", unsafe_allow_html=True)
-st.markdown("loader.io is one of the most popular downloader tools on the internet. With this tool, you can download and convert videos from almost anywhere on the net. Enter the page URL in the field above, choose the format, and click Download.", unsafe_allow_html=True)
+    # 2. Render Card Content
+    with c_thumb:
+        img_src = preview_thumb if preview_thumb else 'https://via.placeholder.com/320x180?text=No+Thumbnail'
+        st.markdown(f'<div class="result-thumb"><img src="{img_src}"></div>', unsafe_allow_html=True)
+        
+    with c_info:
+        st.markdown(f'<div class="video-title">{preview_title}</div>', unsafe_allow_html=True)
+        st.markdown(f"""
+        <div class="video-meta-row">
+            <div class="format-tag"><span style="color:#5356FF;">📹</span> {selected_format_label}</div>
+            <div class="size-tag">{file_size_str}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('<div class="add-format-link">+ Add another format</div>', unsafe_allow_html=True)
+        
+        # Download Logic
+        if st.button("Start Download", key="dl_real"):
+            if info:
+                with st.spinner("Processing..."):
+                     try:
+                        outtmpl = "downloaded_video.%(ext)s"
+                        ydl_download_opts = {
+                            "format": "bestvideo+bestaudio/best",
+                            "outtmpl": outtmpl,
+                            "quiet": True,
+                            "noplaylist": True,
+                        }
+                        with yt_dlp.YoutubeDL(ydl_download_opts) as ydl_d:
+                            ydl_d.download([url])
+                        
+                        # Find output
+                        candidates = list(Path(".").glob("downloaded_video.*"))
+                        if candidates:
+                            final_file = str(candidates[0])
+                            with open(final_file, "rb") as f:
+                                st.download_button(
+                                    label="⬇️ Save to Device",
+                                    data=f,
+                                    file_name=final_file,
+                                    mime="video/mp4",
+                                    use_container_width=True
+                                )
+                            st.success("Download Ready!")
+                        else:
+                            st.error("File download failed.")
+                     except Exception as e:
+                        st.error(f"Download Error: {e}")
 
-# --- Footer note ---
-st.markdown(f'<div class="footer-note">We are not affiliated with YouTube. Created by Rifki team - video downloading experts.</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True) # End Card
+
+# --- Footer ---
+st.markdown("""
+<br><br><br>
+<div class="footer-details">
+    <h3>YouTube Video Downloader</h3>
+    <p>
+        loader.fo is one of the most popular downloader tools on the internet. <br>
+        With this tool, you can download and convert videos from almost anywhere on the internet.
+    </p>
+    <br>
+    <div class="nav-bar" style="justify-content: flex-start; margin-bottom:0;">
+       <span style="opacity:0.5; font-size:12px;">© 2026 Loader.fo Clone</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
