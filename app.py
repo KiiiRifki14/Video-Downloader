@@ -6,210 +6,164 @@ import shutil
 # --- 1. KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="Ki.Downloader", page_icon="⚡", layout="wide")
 
-# --- 2. CSS PREMIUM (Sangat Rapi) ---
+# --- 2. CSS SUPER UPDATE (Input Gede & Tombol Tengah) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 
-    /* BACKGROUND UTAMA */
+    /* BASE SETTINGS */
     .stApp {
         background-color: #050505;
         font-family: 'Inter', sans-serif;
     }
+    header, footer, #MainMenu {visibility: hidden;}
 
-    /* MENGHILANGKAN ELEMENT BAWAAN */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-
-    /* CONTAINER UTAMA (Agar tidak terlalu lebar di PC, pas di HP) */
+    /* CONTAINER UTAMA (Focus Mode) */
     .block-container {
-        max-width: 700px;
-        padding-top: 3rem;
+        max-width: 600px; /* Dipersempit biar fokus di tengah HP */
+        padding-top: 2rem;
         padding-bottom: 5rem;
     }
 
     /* HEADER */
-    .logo-text {
-        font-size: 22px;
-        font-weight: 800;
-        color: white;
-    }
+    .logo-text { font-size: 20px; font-weight: 800; color: white; }
     .logo-text span { color: #4c4cff; }
-
-    /* BADGE PRIBADI */
     .private-badge {
-        background: rgba(255, 255, 255, 0.1);
-        color: #888;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 600;
-        border: 1px solid #333;
-        display: inline-block;
+        background: #111; color: #666; padding: 4px 10px;
+        border-radius: 20px; font-size: 10px; border: 1px solid #222;
     }
 
-    /* JUDUL BESAR */
+    /* JUDUL */
     .hero-title {
-        text-align: center;
-        font-size: 38px;
-        font-weight: 800;
-        color: white;
-        margin-top: 30px;
-        margin-bottom: 5px;
+        text-align: center; font-size: 32px; font-weight: 800;
+        color: white; margin-top: 40px; margin-bottom: 5px;
     }
     .hero-title span { color: #4c4cff; }
-    
-    .hero-desc {
-        text-align: center;
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 40px;
-    }
+    .hero-desc { text-align: center; color: #666; font-size: 13px; margin-bottom: 40px; }
 
-    /* INPUT BOX (Custom Style) */
+    /* --- UPDATE: INPUT BOX JADI LEBIH GEDE --- */
     .stTextInput > div > div > input {
         background-color: #121212;
         color: white;
-        border: 1px solid #333;
-        border-radius: 15px;
-        padding: 25px 15px;
-        font-size: 16px;
-        text-align: center; /* Teks input di tengah */
+        border: 2px solid #222; /* Border ditebalkan dikit */
+        border-radius: 25px; /* Lebih bulat (Pill Shape) */
+        padding: 30px 20px; /* Padding GEDE biar tinggi */
+        font-size: 18px; /* Huruf lebih besar */
+        text-align: center;
+        transition: all 0.3s;
     }
     .stTextInput > div > div > input:focus {
         border-color: #4c4cff;
-        box-shadow: 0 0 15px rgba(76, 76, 255, 0.2);
+        box-shadow: 0 0 20px rgba(76, 76, 255, 0.4);
+        background-color: #1a1a1a;
     }
 
-    /* TOMBOL UTAMA (BIRU) */
-    /* Kita targetkan tombol di dalam columns nanti */
+    /* --- UPDATE: TOMBOL --- */
+    /* Kita atur tombol biar efeknya 'nendang' */
     div[data-testid="stButton"] > button {
-        background-color: #4c4cff;
+        background: linear-gradient(90deg, #4c4cff 0%, #3535ff 100%);
         color: white;
         border: none;
-        padding: 12px 24px;
-        font-weight: 700;
+        padding: 15px 0px;
+        font-weight: 800;
         font-size: 16px;
-        border-radius: 50px; /* Tombol bulat lonjong */
-        width: 100%;
-        transition: 0.2s;
-        box-shadow: 0 4px 15px rgba(76, 76, 255, 0.3);
+        border-radius: 50px;
+        box-shadow: 0 10px 30px rgba(76, 76, 255, 0.2);
+        transition: 0.3s;
     }
     div[data-testid="stButton"] > button:hover {
-        background-color: #3535ff;
-        transform: scale(1.02);
+        transform: scale(1.05);
+        box-shadow: 0 15px 40px rgba(76, 76, 255, 0.4);
     }
     
-    /* CARD HASIL */
+    /* RESULT CARD */
     .result-card {
-        background-color: #111;
-        border: 1px solid #222;
-        border-radius: 20px;
-        padding: 20px;
-        margin-top: 30px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    }
-    
-    /* LOADING SPINNER CUSTOM COLOR */
-    .stSpinner > div {
-        border-top-color: #4c4cff !important;
+        background-color: #111; border: 1px solid #222;
+        border-radius: 20px; padding: 25px; margin-top: 30px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. HEADER (Logo & Badge) ---
-# Menggunakan kolom agar rapi kanan-kiri
-col_h1, col_h2 = st.columns([1, 1])
-with col_h1:
-    st.markdown('<div class="logo-text">Ki<span>.downloader</span></div>', unsafe_allow_html=True)
-with col_h2:
-    st.markdown('<div style="text-align: right;"><span class="private-badge">🔒 Personal Use Only</span></div>', unsafe_allow_html=True)
+# --- 3. HEADER ---
+c1, c2 = st.columns([1, 1])
+with c1: st.markdown('<div class="logo-text">Ki<span>.downloader</span></div>', unsafe_allow_html=True)
+with c2: st.markdown('<div style="text-align:right"><span class="private-badge">🔒 Personal Only</span></div>', unsafe_allow_html=True)
 
-# --- 4. HERO (Judul) ---
+# --- 4. HERO ---
 st.markdown("""
     <div class="hero-title">Video <span>Downloader</span></div>
-    <div class="hero-desc">TikTok • Instagram • YouTube (No Watermark)</div>
+    <div class="hero-desc">Download Video TikTok • Instagram • YouTube (HD)</div>
 """, unsafe_allow_html=True)
 
-# --- 5. INPUT & BUTTON (BAGIAN PENTING) ---
-
-# Inisialisasi State
+# --- 5. INPUT AREA (YANG DIPERBESAR) ---
 if 'video_info' not in st.session_state: st.session_state.video_info = None
 if 'current_url' not in st.session_state: st.session_state.current_url = ""
 
-# Input Full Width
-url_input = st.text_input("URL", placeholder="Paste link di sini...", label_visibility="collapsed")
+# Input Link
+url_input = st.text_input("URL", placeholder="Tempel Link Video Disini...", label_visibility="collapsed")
 
-st.write("") # Spasi dikit
+st.write("") # Jarak Spasi
 
-# --- TRIK MENENGAHKAN TOMBOL ---
-# Kita bagi layar jadi 3 kolom: [Kosong, TOMBOL, Kosong]
-# Rasio [1, 2, 1] membuat tombol di tengah punya lebar 50% dari layar (pas di HP)
-c1, c2, c3 = st.columns([1, 2, 1])
+# --- 6. TOMBOL (LOGIKA TENGAH MENGGUNAKAN COLUMNS) ---
+# Trik: Kita pakai 3 kolom. [Kosong - TOMBOL - Kosong]
+# Rasio [0.5, 2, 0.5] artinya tombol akan mengambil porsi terbesar di tengah.
+col_left, col_center, col_right = st.columns([0.2, 2, 0.2])
 
-with c2: # Kita taruh tombol HANYA di kolom tengah
-    cek_clicked = st.button("🔍 Cek Video Sekarang")
+with col_center:
+    # use_container_width=True adalah KUNCI agar tombol memenuhi kolom tengah
+    cek_clicked = st.button("🔍 CEK VIDEO SEKARANG", use_container_width=True)
 
 # Logika Tombol
 if cek_clicked:
     if url_input:
         st.session_state.current_url = url_input
         st.session_state.download_ready = None 
-        with st.spinner("Sedang mencari video..."):
+        with st.spinner("Sedang mencari di server..."):
             info = backend.get_video_info(url_input)
             if info:
                 st.session_state.video_info = info
             else:
-                st.error("Link tidak valid atau video tidak ditemukan.")
+                st.error("❌ Video tidak ditemukan!")
                 st.session_state.video_info = None
     else:
-        st.warning("⚠️ Link belum diisi, bos!")
+        st.warning("⚠️ Masukkan link dulu, Bos!")
 
-
-# --- 6. HASIL (RESULT CARD) ---
+# --- 7. HASIL (RESULT) ---
 if st.session_state.video_info:
     info = st.session_state.video_info
     
     st.markdown('<div class="result-card">', unsafe_allow_html=True)
     
-    # Layout Thumbnail & Info
-    c_img, c_txt = st.columns([1, 2])
-    
+    # Kolom Gambar & Info
+    c_img, c_info = st.columns([1, 2])
     with c_img:
         if info.get('thumbnail'):
             st.image(info.get('thumbnail'), use_container_width=True)
-        else:
-            st.markdown("🎬 No Preview")
-            
-    with c_txt:
-        st.markdown(f"<h4 style='color:white; margin:0;'>{info.get('title', 'Video')}</h4>", unsafe_allow_html=True)
-        st.markdown(f"<p style='color:#666; font-size:12px; margin-bottom:15px;'>Durasi: {info.get('duration_string', '-')} | Format: MP4</p>", unsafe_allow_html=True)
+    
+    with c_info:
+        st.markdown(f"<h4 style='color:white; margin:0 0 10px 0;'>{info.get('title', 'Video')}</h4>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color:#888; font-size:12px;'>Durasi: {info.get('duration_string','-')} | Format: MP4</p>", unsafe_allow_html=True)
         
-        # LOGIKA DOWNLOAD
-        # Tombol Proses juga kita buat Full Width di dalam card
-        if st.button("⚡ Download File", key="proc_dl", use_container_width=True):
-            with st.spinner("Downloading..."):
+        # Tombol Download File (Juga Full Width di kolom ini)
+        if st.button("⚡ DOWNLOAD FILE", key="dl_proc", use_container_width=True):
+            with st.spinner("Mengunduh..."):
                 file_path = backend.download_video(st.session_state.current_url)
-                
                 if file_path and os.path.exists(file_path):
-                    with open(file_path, "rb") as f:
-                        file_data = f.read()
+                    with open(file_path, "rb") as f: file_data = f.read()
                     try: shutil.rmtree(os.path.dirname(file_path)) 
                     except: pass
-                    
                     st.session_state.download_ready = file_data
                     st.session_state.download_name = os.path.basename(file_path)
                     st.rerun()
                 else:
-                    st.error("Gagal download.")
+                    st.error("Gagal.")
 
-        # TOMBOL FINAL (MUNCUL SETELAH PROSES)
+        # Tombol Final Save
         if 'download_ready' in st.session_state and st.session_state.download_ready:
-            st.write("") # Spasi
-            st.success("Selesai! Klik tombol di bawah:")
+            st.write("")
+            st.success("Selesai! Simpan sekarang:")
             st.download_button(
-                label="⬇️ SIMPAN KE GALERI",
+                label="⬇️ SIMPAN KE GALERI HP",
                 data=st.session_state.download_ready,
                 file_name=st.session_state.download_name,
                 mime="video/mp4",
@@ -219,9 +173,5 @@ if st.session_state.video_info:
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-# --- 7. FOOTER ---
-st.markdown("""
-    <div style="text-align: center; margin-top: 60px; color: #333; font-size: 12px;">
-    Ki.Downloader © 2026 • Private Tool
-    </div>
-""", unsafe_allow_html=True)
+# Footer
+st.markdown("<div style='text-align:center; margin-top:50px; color:#333; font-size:12px;'>Ki.Downloader © 2026</div>", unsafe_allow_html=True)
