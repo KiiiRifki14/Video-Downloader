@@ -7,24 +7,29 @@ import time
 import requests
 from streamlit_lottie import st_lottie
 
-# --- KONFIGURASI HALAMAN ---
-st.set_page_config(page_title="Rifki Downloader", page_icon="⚡", layout="centered")
+# --- KONFIGURASI HALAMAN BARU ---
+st.set_page_config(page_title="Rifki Downloader", page_icon="🌿", layout="centered")
 
 # --- FUNGSI LOAD ANIMASI LOTTIE ---
 def load_lottieurl(url):
-    r = requests.get(url)
-    if r.status_code != 200:
+    try:
+        r = requests.get(url)
+        if r.status_code != 200:
+            return None
+        return r.json()
+    except:
         return None
-    return r.json()
 
-# --- CSS: ANIMASI BACKGROUND & TAMPILAN ---
+# --- CSS: TEMA ALAM BERGERAK ---
 st.markdown("""
     <style>
-    /* 1. Background Bergerak (Animated Gradient) */
+    /* 1. Background Gerak Nuansa Alam (Hutan & Air) */
     .stApp {
-        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        /* Perpaduan warna hijau daun, biru air, dan sedikit cahaya matahari */
+        background: linear-gradient(-45deg, #134E5E, #71B280, #2bc0e4, #eaecc6);
         background-size: 400% 400%;
-        animation: gradient 15s ease infinite;
+        /* Animasi gerak lambat yang menenangkan (30 detik) */
+        animation: gradient 30s ease infinite;
     }
     
     @keyframes gradient {
@@ -33,37 +38,56 @@ st.markdown("""
         100% { background-position: 0% 50%; }
     }
 
-    /* 2. Card Putih Transparan (Glassmorphism) */
+    /* 2. Card Putih Transparan (Agar tulisan terbaca jelas di atas background) */
     .block-container {
-        background-color: rgba(255, 255, 255, 0.95); /* Putih agak transparan */
+        background-color: rgba(255, 255, 255, 0.92); /* Putih agak transparan */
         padding: 3rem 2rem;
         border-radius: 25px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         margin-top: 2rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
     }
 
     /* 3. Judul Keren */
     h1 {
-        color: #2c3e50;
+        color: #2E7D32; /* Hijau Tua */
         text-align: center;
         font-family: 'Segoe UI', sans-serif;
         font-weight: 800;
         margin-bottom: 0;
     }
+    p {
+        color: #555;
+        text-align: center;
+    }
     
-    /* 4. Tombol Utama dengan Efek Tekan */
+    /* 4. Input Box */
+    .stTextInput > div > div > input {
+        text-align: center;
+        border-radius: 15px;
+        border: 2px solid #A5D6A7; /* Hijau muda */
+        padding: 15px;
+    }
+    .stTextInput > div > div > input:focus {
+        border-color: #2E7D32;
+        box-shadow: 0 0 10px rgba(46, 125, 50, 0.3);
+    }
+    
+    /* 5. Tombol Utama (Warna Alam Hijau-Biru) */
     .stButton > button {
         width: 100%;
-        background: linear-gradient(90deg, #4b6cb7 0%, #182848 100%);
+        background: linear-gradient(90deg, #11998e 0%, #38ef7d 100%);
         color: white;
         border: none;
         border-radius: 12px;
         padding: 15px;
         font-weight: bold;
+        font-size: 16px;
         transition: transform 0.1s;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     .stButton > button:active {
-        transform: scale(0.95);
+        transform: scale(0.98);
     }
     
     /* Hilangkan footer */
@@ -72,19 +96,19 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- LOAD ANIMASI ---
-# Ini URL animasi Lottie (Bisa diganti cari di lottiefiles.com)
-lottie_download = load_lottieurl("https://assets5.lottiefiles.com/packages/lf20_S8d8sK.json")
+# --- LOAD ANIMASI (Ganti jadi tema yang lebih kalem) ---
+# Animasi orang santai dengan gadget
+lottie_download = load_lottieurl("https://assets10.lottiefiles.com/packages/lf20_qp1q7mct.json")
 
 # --- TAMPILAN ATAS (Header) ---
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    # Menampilkan animasi di tengah
     if lottie_download:
-        st_lottie(lottie_download, height=200, key="coding")
+        st_lottie(lottie_download, height=180, key="nature_vibe")
 
-st.markdown("<h1 style='text-align: center;'>⚡ Ultra Downloader</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #555;'>Paste link TikTok, IG, atau YouTube di bawah</p>", unsafe_allow_html=True)
+# --- JUDUL BARU ---
+st.markdown("<h1 style='text-align: center;'>🌿 Rifki Downloader</h1>", unsafe_allow_html=True)
+st.markdown("<p>Simpan video TikTok, IG, & YouTube dengan mudah.</p>", unsafe_allow_html=True)
 
 # --- FUNGSI TOOLS ---
 def clean_filename(title):
@@ -96,7 +120,7 @@ def detect_type(url):
     return "VIDEO"
 
 # --- INPUT AREA ---
-url = st.text_input("", placeholder="🔗 Tempel Link di sini...")
+url = st.text_input("", placeholder="Tempel Link di sini...")
 
 if url:
     tipe_konten = detect_type(url)
@@ -106,7 +130,7 @@ if url:
         
         # --- LOGIKA VIDEO ---
         if tipe_konten == "VIDEO":
-            status = st.info("🔄 Sedang memproses...")
+            status = st.info("🔄 Sedang memproses di server...")
             bar = st.progress(10)
             
             ydl_opts = {
@@ -116,17 +140,17 @@ if url:
             }
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    bar.progress(50)
+                    bar.progress(40)
                     info = ydl.extract_info(url, download=True)
                     judul = clean_filename(info.get('title', 'video'))
                     ext = info.get('ext', 'mp4')
                     bar.progress(100)
                 
                 if os.path.exists(f"temp_video.{ext}"):
-                    status.success("✅ Selesai!")
+                    status.success("✅ Selesai! Silakan simpan.")
                     with open(f"temp_video.{ext}", "rb") as f:
                         st.download_button(
-                            label="⬇️ SIMPAN VIDEO",
+                            label="⬇️ SIMPAN VIDEO KE GALERI",
                             data=f,
                             file_name=f"{judul}.{ext}",
                             mime=f"video/{ext}",
@@ -138,8 +162,8 @@ if url:
 
         # --- LOGIKA FOTO ---
         elif tipe_konten == "FOTO":
-            status = st.info("📸 Mengambil foto...")
-            temp_dir = "temp_ig"
+            status = st.info("📸 Sedang mengambil foto...")
+            temp_dir = "temp_ig_nature"
             if os.path.exists(temp_dir): shutil.rmtree(temp_dir)
             
             try:
@@ -155,7 +179,7 @@ if url:
                         break
                 
                 if target_file:
-                    status.success("✅ Foto Ditemukan!")
+                    status.success("✅ Foto siap disimpan!")
                     with open(target_file, "rb") as f:
                         st.download_button(
                             label="⬇️ SIMPAN FOTO",
@@ -167,7 +191,6 @@ if url:
                         )
                     shutil.rmtree(temp_dir)
                 else:
-                    status.error("Foto tidak ketemu.")
+                    status.error("Foto tidak ditemukan.")
             except Exception as e:
                 status.error(f"Gagal: {e}")
-
