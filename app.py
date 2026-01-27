@@ -47,7 +47,6 @@ st.markdown("""
         color: white;
         border: 2px solid #222; /* Border ditebalkan dikit */
         border-radius: 25px; /* Lebih bulat (Pill Shape) */
-        padding: 30px 20px; /* Padding GEDE biar tinggi */
         font-size: 18px; /* Huruf lebih besar */
         text-align: center;
         transition: all 0.3s;
@@ -175,3 +174,4 @@ if st.session_state.video_info:
 
 # Footer
 st.markdown("<div style='text-align:center; margin-top:50px; color:#333; font-size:12px;'>Ki.Downloader © 2026</div>", unsafe_allow_html=True)
+
