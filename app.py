@@ -4,74 +4,104 @@ import os
 
 st.set_page_config(page_title="Ki.downloader - Video Downloader", page_icon="🔵", layout="wide")
 
-# --- CSS: Light Theme, Pill Inputs, Blue Accents ---
-st.markdown("""
+# --- Session State for Theme ---
+if 'theme' not in st.session_state:
+    st.session_state.theme = 'light'
+
+def toggle_theme():
+    st.session_state.theme = 'dark' if st.session_state.theme == 'light' else 'light'
+
+# --- Theme Variables ---
+themes = {
+    'light': {
+        'bg_color': '#ffffff',
+        'text_color': '#1a1a1a',
+        'card_bg': '#ffffff',
+        'element_bg': '#f0f2f5',
+        'border_color': '#e1e4e8',
+        'subtext': '#666666',
+        'accent': '#1877f2',
+        'accent_hover': '#145dbf',
+        'feature_title': '#ffffff', # card text is white in blue cards usually
+        'feature_text': 'rgba(255,255,255,0.9)'
+    },
+    'dark': {
+        'bg_color': '#0d0d0d',
+        'text_color': '#ffffff',
+        'card_bg': '#161616',
+        'element_bg': '#262626',
+        'border_color': '#333333',
+        'subtext': '#aaaaaa',
+        'accent': '#1877f2',
+        'accent_hover': '#145dbf',
+        'feature_title': '#ffffff',
+        'feature_text': 'rgba(255,255,255,0.9)'
+    }
+}
+
+current_theme = themes[st.session_state.theme]
+
+# --- CSS Injection ---
+st.markdown(f"""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
-:root {
-  --bg-color: #ffffff;
-  --text-color: #1a1a1a;
-  --accent-blue: #1877f2; /* Ki.downloader Blue */
-  --accent-blue-hover: #145dbf;
-  --gray-bg: #f5f7fa;
-  --border-color: #e1e4e8;
-}
+:root {{
+  --bg-color: {current_theme['bg_color']};
+  --text-color: {current_theme['text_color']};
+  --card-bg: {current_theme['card_bg']};
+  --element-bg: {current_theme['element_bg']};
+  --border-color: {current_theme['border_color']};
+  --subtext-color: {current_theme['subtext']};
+  --accent-blue: {current_theme['accent']};
+  --accent-blue-hover: {current_theme['accent_hover']};
+}}
 
-.stApp {
+.stApp {{
   background-color: var(--bg-color);
   font-family: 'Outfit', sans-serif;
   color: var(--text-color);
-}
-header {visibility: hidden;}
-.block-container {
+}}
+header {{visibility: hidden;}}
+.block-container {{
     padding-top: 1rem;
     padding-bottom: 2rem;
     max-width: 1000px;
-}
+}}
 
 /* 1. Header Navigation */
-.nav-header {
+.nav-header {{
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1rem 0;
     margin-bottom: 2rem;
-}
-.logo-text {
+}}
+.logo-text {{
     font-size: 24px;
     font-weight: 800;
-    color: #1a1a1a;
-}
-.logo-text span { color: var(--accent-blue); }
-
-.theme-btn {
-    background: var(--accent-blue);
-    color: white;
-    padding: 8px 16px;
-    border-radius: 20px;
-    font-weight: 600;
-    font-size: 13px;
-    border: none;
-}
+    color: var(--text-color);
+}}
+.logo-text span {{ color: var(--accent-blue); }}
 
 /* 2. Hero Section */
-.hero-section {
+.hero-section {{
     text-align: center;
     padding: 3rem 0;
     position: relative;
-}
-.hero-title {
+}}
+.hero-title {{
     font-size: 48px;
     font-weight: 800;
     margin-bottom: 1rem;
     line-height: 1.2;
-}
-.hero-title span {
+    color: var(--text-color);
+}}
+.hero-title span {{
     color: var(--accent-blue);
     position: relative;
-}
-.hero-title span::after {
+}}
+.hero-title span::after {{
     content: '';
     display: block;
     width: 100%;
@@ -82,63 +112,55 @@ header {visibility: hidden;}
     bottom: 5px;
     left: 0;
     border-radius: 4px;
-}
-.hero-desc {
-    color: #666;
+}}
+.hero-desc {{
+    color: var(--subtext-color);
     max-width: 600px;
     margin: 0 auto 2rem auto;
     font-size: 16px;
     line-height: 1.6;
-}
+}}
 
 /* 3. Input Pill Container */
-/* Center the container */
-.pill-container-outer {
+.pill-container-outer {{
     max-width: 800px;
     margin: 0 auto 3rem auto;
-    background: white;
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 99px;
-    padding: 8px; /* Inner padding around widgets */
+    padding: 8px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-}
-
-/* Paste Button Styling (Custom Class) */
-.paste-btn-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-}
+}}
 
 /* Layout Hacks for Streamlit Columns inside the Pill */
-div[data-testid="column"] {
+div[data-testid="column"] {{
     display: flex;
-    align-items: center; /* Vertically center items */
+    align-items: center;
     justify-content: center;
-}
+}}
 
 /* Input Field Styling */
-div[data-testid="stTextInput"] {
+div[data-testid="stTextInput"] {{
     width: 100%;
-}
-div[data-testid="stTextInput"] > div {
+}}
+div[data-testid="stTextInput"] > div {{
     border: none !important;
     background-color: transparent !important;
-}
-div[data-testid="stTextInput"] input {
+}}
+div[data-testid="stTextInput"] input {{
     font-size: 16px;
-    color: #333;
+    color: var(--text-color);
     padding: 0 10px; 
-}
-/* Remove focus border on the input itself since wrapper has border */
-div[data-testid="stTextInput"] > div[data-baseweb="input"]:focus-within {
+}}
+/* Remove focus border on the input itself */
+div[data-testid="stTextInput"] > div[data-baseweb="input"]:focus-within {{
     box-shadow: none !important;
     border-color: transparent !important;
-}
+}}
 
-/* Download Button Styling */
-div[data-testid="stButton"] button {
+/* BUTTON STYLING */
+/* Primary Button (Download) */
+div[data-testid="stButton"] button[kind="primary"] {{
     background: var(--accent-blue);
     color: white;
     border-radius: 99px;
@@ -149,55 +171,68 @@ div[data-testid="stButton"] button {
     height: 100%;
     width: 100%;
     white-space: nowrap;
-}
-div[data-testid="stButton"] button:hover {
+}}
+div[data-testid="stButton"] button[kind="primary"]:hover {{
     background: var(--accent-blue-hover);
-    color: white;
-}
-div[data-testid="stButton"] button:active {
-    background: var(--accent-blue-hover);
-    color: white;
-}
+    color: white !important;
+    border: none;
+}}
+
+/* Secondary Button (Theme & Paste) */
+div[data-testid="stButton"] button[kind="secondary"] {{
+    background: var(--element-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}}
+div[data-testid="stButton"] button[kind="secondary"]:hover {{
+    border-color: var(--accent-blue);
+    color: var(--accent-blue);
+}}
+
 
 /* 4. Warning Banner */
-.warning-banner {
+.warning-banner {{
     background: #1a1a1a;
     color: white;
     text-align: center;
-    padding: 8px 12px; /* Reduced padding */
-    font-size: 12px; /* Smaller font */
+    padding: 8px 12px;
+    font-size: 12px;
     font-weight: 700;
     border-radius: 8px;
-    margin: 1rem auto; /* Reduced margin */
-    max-width: 800px; /* Reduced width */
+    margin: 1rem auto;
+    max-width: 800px;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-}
+}}
 
-/* 5. Info Section (What is...) */
-.info-section {
+/* 5. Info Section */
+.info-section {{
     text-align: center;
     margin-top: 4rem;
-}
-.section-title {
+}}
+.section-title {{
     font-size: 32px;
     font-weight: 800;
     margin-bottom: 2rem;
-}
-.section-title span {
+    color: var(--text-color);
+}}
+.section-title span {{
     border-bottom: 4px solid var(--accent-blue);
-}
+}}
 
-/* 6. Feature Cards (Blue) */
-.feature-grid {
+/* 6. Feature Cards */
+.feature-grid {{
     display: flex;
     gap: 20px;
     margin-top: 2rem;
     flex-wrap: wrap;
-}
-.feature-card {
+}}
+.feature-card {{
     background: var(--accent-blue);
     color: white;
     padding: 30px;
@@ -206,20 +241,20 @@ div[data-testid="stButton"] button:active {
     min-width: 300px;
     text-align: left;
     position: relative;
-}
-.feature-card h3 {
+}}
+.feature-card h3 {{
     font-size: 20px;
     font-weight: 700;
     margin-bottom: 12px;
     color: white !important;
-}
-.feature-card p {
+}}
+.feature-card p {{
     font-size: 14px;
     opacity: 0.9;
     line-height: 1.5;
     color: white !important;
-}
-.arrow-icon {
+}}
+.arrow-icon {{
     position: absolute;
     bottom: 20px;
     right: 20px;
@@ -232,11 +267,11 @@ div[data-testid="stButton"] button:active {
     align-items: center;
     justify-content: center;
     font-weight: bold;
-}
+}}
 
-/* Result Card (Minimalist) */
-.result-card {
-    background: white;
+/* Result Card */
+.result-card {{
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 16px;
     padding: 20px;
@@ -245,24 +280,23 @@ div[data-testid="stButton"] button:active {
     max-width: 700px;
     margin: 0 auto;
     box-shadow: 0 10px 40px rgba(0,0,0,0.05);
-}
-.res-thumb img { border-radius: 10px; width: 100%; display: block; }
-.res-title { font-weight: 700; font-size: 18px; margin-bottom: 8px; color: #1a1a1a; }
-.res-meta { font-size: 13px; color: #666; margin-bottom: 16px; }
+}}
+.res-thumb img {{ border-radius: 10px; width: 100%; display: block; }}
+.res-title {{ font-weight: 700; font-size: 18px; margin-bottom: 8px; color: var(--text-color); }}
+.res-meta {{ font-size: 13px; color: var(--subtext-color); margin-bottom: 16px; }}
 
 /* Footer */
-.footer-dark {
+.footer-dark {{
     background: #1a1a1a;
     color: #888;
     padding: 3rem 1rem;
     margin-top: 5rem;
     text-align: center;
     border-radius: 20px 20px 0 0;
-}
-/* Reduce standard block gap */
-div[data-testid="stVerticalBlock"] > div {
+}}
+div[data-testid="stVerticalBlock"] > div {{
     gap: 0.5rem;
-}
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -275,11 +309,12 @@ with col1:
     </div>
     """, unsafe_allow_html=True)
 with col2:
-     st.markdown("""
-    <div class="nav-header" style="justify-content: flex-end;">
-        <button class="theme-btn">Dark 🌙</button>
-    </div>
-    """, unsafe_allow_html=True)
+     # Theme Toggle Button
+     icon = "🌙" if st.session_state.theme == 'light' else "☀️"
+     label = "Dark" if st.session_state.theme == 'light' else "Light"
+     if st.button(f"{label} {icon}", key="theme_toggle", help="Switch Theme"):
+         toggle_theme()
+         st.rerun()
 
 # 2. Hero
 st.markdown("""
@@ -301,14 +336,13 @@ with c_inp:
     url_input = st.text_input("", placeholder="https://youtube.com/watch?v=...", label_visibility="collapsed")
 
 with c_paste:
-    # Automatic Paste Button (Visual placeholder or functional if possible locally)
-    # Since we can't easily paste from clipboard in pure Streamlit web, we add the button as requested.
-    st.button("📋", help="Paste from clipboard (Ctrl+V)")
+    st.button("📋", help="Paste from clipboard", key="paste_btn", type="secondary")
 
 with c_btn:
-    dl_clicked = st.button("Download")
+    dl_clicked = st.button("Download", type="primary")
 
 st.markdown('</div>', unsafe_allow_html=True)
+
 
 # --- Logic Handling ---
 if dl_clicked and url_input:
