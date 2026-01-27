@@ -1,392 +1,401 @@
 import streamlit as st
-import yt_dlp
-import instaloader
+import backend
 import os
-import shutil
-import time
-from pathlib import Path
 
-st.set_page_config(page_title="Rifki Downloader", page_icon="🍃", layout="wide")
+st.set_page_config(page_title="Loader.fo - YouTube Video Downloader", page_icon="🔵", layout="wide")
 
-# --- CSS: Loader.fo inspired (Dark, Purple/Blue Gradient, Rounded) ---
+# --- CSS: Light Theme, Pill Inputs, Blue Accents ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
 
-/* Global Variables */
 :root {
-  --bg-color: #0d0d0d;
-  --card-bg: #161616;
-  --accent-gradient: linear-gradient(90deg, #5356FF 0%, #378CE7 100%);
-  --accent-color: #5356FF;
-  --text-main: #ffffff;
-  --text-muted: #888888;
+  --bg-color: #ffffff;
+  --text-color: #1a1a1a;
+  --accent-blue: #1877f2; /* Loader.fo Blue */
+  --accent-blue-hover: #145dbf;
+  --gray-bg: #f5f7fa;
+  --border-color: #e1e4e8;
 }
 
-/* Page Reset */
 .stApp {
   background-color: var(--bg-color);
   font-family: 'Outfit', sans-serif;
-  color: var(--text-main);
+  color: var(--text-color);
 }
 header {visibility: hidden;}
 .block-container {
-    padding-top: 2rem;
-    padding-bottom: 5rem;
-    max-width: 900px;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+    max-width: 1000px;
 }
 
-/* 1. Header / Top Bar */
-.top-header {
+/* 1. Header Navigation */
+.nav-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 1rem 0;
     margin-bottom: 2rem;
 }
-.logo {
+.logo-text {
     font-size: 24px;
     font-weight: 800;
-    color: #fff;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    color: #1a1a1a;
 }
-.logo span { color: #fff; }
-.logo .highlight { color: #378CE7; } 
+.logo-text span { color: var(--accent-blue); }
 
-/* Nav Icons Bar (Horizontal) */
-.nav-bar {
+.nav-links {
     display: flex;
-    gap: 8px;
-    background: transparent;
-    overflow-x: auto;
-    padding-bottom: 10px;
-    margin-bottom: 3rem;
-    justify-content: center;
+    gap: 20px;
 }
-.nav-item {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: transparent;
-    padding: 8px 16px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-muted);
+.nav-link {
+    font-size: 14px;
+    font-weight: 600;
+    color: #555;
+    text-decoration: none;
     cursor: pointer;
-    transition: 0.3s;
-    border: 1px solid transparent;
 }
-.nav-item.active {
-    background: transparent;
-    color: #fff;
-    border-bottom: 2px solid var(--accent-color);
-    border-radius: 0;
+.nav-link.active {
+    color: var(--accent-blue);
+    border-bottom: 2px solid var(--accent-blue);
 }
-.nav-item:hover {
-    color: #fff;
+.theme-btn {
+    background: var(--accent-blue);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 13px;
+    border: none;
 }
 
 /* 2. Hero Section */
-.hero-container {
+.hero-section {
     text-align: center;
-    margin-bottom: 3rem;
+    padding: 3rem 0;
+    position: relative;
 }
 .hero-title {
     font-size: 48px;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
     line-height: 1.2;
 }
 .hero-title span {
-    background: var(--accent-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--accent-blue);
+    position: relative;
 }
-.hero-subtitle {
-    font-size: 15px;
-    color: var(--text-muted);
+.hero-title span::after {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 6px;
+    background: var(--accent-blue);
+    opacity: 0.2;
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    border-radius: 4px;
+}
+.hero-desc {
+    color: #666;
     max-width: 600px;
-    margin: 0 auto 20px auto;
-    line-height: 1.5;
-}
-.copyright-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    padding: 8px 16px;
-    border-radius: 99px;
-    font-size: 11px;
-    color: #a0a0a0;
-    font-weight: 600;
-    border: 1px solid rgba(255,255,255,0.05);
+    margin: 0 auto 2rem auto;
+    font-size: 16px;
+    line-height: 1.6;
 }
 
-/* 3. Input Styling - Target Streamlit Widget directly for the 'Box' look */
-div[data-testid="stTextInput"] {
-    background-color: var(--card-bg) !important;
-    border: 1px solid #333 !important;
-    border-radius: 14px !important;
-    padding: 2px 10px !important;
-    transition: 0.3s;
+/* 3. Input Pill Container */
+.input-pill-wrapper {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 99px;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    max-width: 700px;
+    margin: 0 auto 3rem auto;
 }
-div[data-testid="stTextInput"]:focus-within {
-    border-color: var(--accent-color) !important;
-    box-shadow: 0 0 15px rgba(83, 86, 255, 0.2);
+.format-dropdown {
+    background: #f0f2f5;
+    border-radius: 99px;
+    padding: 10px 20px;
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    margin-right: 10px;
+}
+/* Streamlit input override */
+div[data-testid="stTextInput"] {
+    width: 100%;
 }
 div[data-testid="stTextInput"] > div {
-    background-color: transparent !important;
     border: none !important;
-    color: white !important;
+    background: transparent !important;
 }
 div[data-testid="stTextInput"] input {
-    color: white !important;
-    font-size: 15px;
+    color: #333 !important;
+    font-size: 16px;
 }
-
-/* Custom 'Go' Button Styling */
+/* Download Button override */
 div[data-testid="stButton"] button {
-    background: var(--accent-gradient);
+    background: var(--accent-blue);
     color: white;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 12px;
+    border-radius: 99px;
+    padding: 12px 32px;
     font-weight: 700;
-    font-size: 14px;
-    margin-top: 2px; /* Alignment fix */
-    width: 100%;
+    border: none;
+    box-shadow: 0 4px 15px rgba(24, 119, 242, 0.3);
+    transition: 0.2s;
 }
 div[data-testid="stButton"] button:hover {
-    border-color: transparent !important;
-    color: white !important;
-    opacity: 0.9;
+    background: var(--accent-blue-hover);
+    color: white;
 }
 
-/* 4. Result Card */
-.result-card {
-    background: var(--card-bg);
-    border: 1px solid #333;
-    border-radius: 20px;
-    padding: 24px;
-    margin-top: 2rem;
-}
-/* Flex is hard with Streamlit columns, we rely on layout but style the contents */
-.result-thumb img {
-    border-radius: 12px;
-    display: block;
-    width: 100%;
-}
-.video-title {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    line-height: 1.4;
-    color: #fff;
-}
-.video-meta-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(0,0,0,0.3);
-    padding: 10px 16px;
-    border-radius: 8px;
-    margin-bottom: 1rem;
-}
-.format-tag {
-    font-weight: 600;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    color: #fff;
-}
-.size-tag {
-    color: #fff;
-    font-weight: 700;
-}
-.add-format-link {
-    color: #378CE7;
+/* 4. Warning Banner */
+.warning-banner {
+    background: #1a1a1a;
+    color: white;
+    text-align: center;
+    padding: 12px;
     font-size: 13px;
-    cursor: pointer;
-    margin-bottom: 1rem;
-    display: block;
+    font-weight: 700;
+    border-radius: 12px;
+    margin: 2rem auto;
+    max-width: 900px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
+
+/* 5. Info Section (What is...) */
+.info-section {
+    text-align: center;
+    margin-top: 4rem;
+}
+.section-title {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 2rem;
+}
+.section-title span {
+    border-bottom: 4px solid var(--accent-blue);
+}
+
+/* 6. Feature Cards (Blue) */
+.feature-grid {
+    display: flex;
+    gap: 20px;
+    margin-top: 2rem;
+    flex-wrap: wrap;
+}
+.feature-card {
+    background: var(--accent-blue);
+    color: white;
+    padding: 30px;
+    border-radius: 16px;
+    flex: 1;
+    min-width: 300px;
+    text-align: left;
+    position: relative;
+}
+.feature-card h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+.feature-card p {
+    font-size: 14px;
+    opacity: 0.9;
+    line-height: 1.5;
+}
+.arrow-icon {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: white;
+    color: var(--accent-blue);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Result Card (Minimalist) */
+.result-card {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    gap: 20px;
+    max-width: 700px;
+    margin: 0 auto;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.05);
+}
+.res-thumb img { border-radius: 10px; width: 100%; display: block; }
+.res-title { font-weight: 700; font-size: 18px; margin-bottom: 8px; color: #1a1a1a; }
+.res-meta { font-size: 13px; color: #666; margin-bottom: 16px; }
 
 /* Footer */
-.footer-details {
+.footer-dark {
+    background: #1a1a1a;
+    color: #888;
+    padding: 3rem 1rem;
     margin-top: 5rem;
-    color: var(--text-muted);
-}
-.footer-details h3 {
-    color: #fff;
-    font-size: 20px;
-    margin-bottom: 1rem;
-}
-.footer-details p {
-    font-size: 14px;
-    line-height: 1.6;
+    text-align: center;
+    border-radius: 20px 20px 0 0;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Header ---
-st.markdown("""
-<div class="top-header">
-    <div class="logo">Loader<span>.fo</span></div>
-    <div style="display:flex; gap:10px;">
-        <span style="font-size:18px;">🌙</span>
+# 1. Header
+col1, col2, col3 = st.columns([1,2,1])
+with col2:
+    st.markdown("""
+    <div class="nav-header">
+        <div class="logo-text">Loader<span>.fo</span></div>
+        <div class="nav-links">
+            <span class="nav-link active">YouTube Video Downloader</span>
+            <span class="nav-link">YouTube to MP3</span>
+            <span class="nav-link">YouTube Short</span>
+        </div>
+        <button class="theme-btn">Dark 🌙</button>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
-# --- Nav Tabs (Visual Only) ---
+# 2. Hero
 st.markdown("""
-<div class="nav-bar">
-    <div class="nav-item active">📺 YouTube Video Downloader</div>
-    <div class="nav-item">🎞️ 4k Video Downloader</div>
-    <div class="nav-item">🎵 YouTube to MP3</div>
-    <div class="nav-item">📜 YouTube Playlist</div>
-    <div class="nav-item">🎼 YouTube to Wav</div>
-</div>
-""", unsafe_allow_html=True)
-
-# --- Hero ---
-st.markdown("""
-<div class="hero-container">
-    <div class="hero-title">YouTube Video<br><span>Downloader</span></div>
-    <div class="hero-subtitle">
+<div class="hero-section">
+    <div class="hero-title">YouTube Video <span>Downloader</span></div>
+    <div class="hero-desc">
         Try this unique tool for quick, hassle-free downloads from YouTube. 
         Transform your offline video collection with this reliable and efficient downloader.
     </div>
-    <div class="copyright-pill">
-        ⚡ WE DO NOT ALLOW/SUPPORT THE DOWNLOAD OF COPYRIGHTED MATERIAL!
+</div>
+""", unsafe_allow_html=True)
+
+# 3. Input Bar (Pill Layout)
+st.markdown('<div class="input-pill-wrapper">', unsafe_allow_html=True)
+c_fmt, c_inp, c_btn = st.columns([0.8, 3, 1])
+
+with c_fmt:
+    # Pseudo-dropdown visual
+    st.markdown('<div class="format-dropdown">MP4 v</div>', unsafe_allow_html=True)
+
+with c_inp:
+    url_input = st.text_input("", placeholder="https://youtube.com/watch?v=...", label_visibility="collapsed")
+
+with c_btn:
+    dl_clicked = st.button("Download")
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+# --- Logic Handling ---
+if dl_clicked and url_input:
+    with st.spinner("Fetching info..."):
+        info = backend.get_video_info(url_input)
+        
+        if info:
+            st.markdown('<div class="result-card">', unsafe_allow_html=True)
+            r_img, r_txt = st.columns([1, 1.5])
+            
+            with r_img:
+                thumb = info.get('thumbnail', '')
+                st.markdown(f'<div class="res-thumb"><img src="{thumb}"></div>', unsafe_allow_html=True)
+            
+            with r_txt:
+                title = info.get('title', 'Unknown Title')
+                st.markdown(f'<div class="res-title">{title}</div>', unsafe_allow_html=True)
+                st.markdown('<div class="res-meta">Format: MP4 (Best)</div>', unsafe_allow_html=True)
+                
+                # Auto download logic or Button?
+                # The "Download" button usually starts the process mostly.
+                # Let's show a "Save" button to finalize.
+                if st.button("Save Video", key="save_video"):
+                     path = backend.download_video(url_input)
+                     if path:
+                         with open(path, "rb") as f:
+                             st.download_button(
+                                 label="⬇️ Click to Save",
+                                 data=f,
+                                 file_name=os.path.basename(path),
+                                 mime="video/mp4"
+                             )
+                         st.success("Video ready!")
+                     else:
+                         st.error("Download failed.")
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            st.error("Invalid URL or Video not found.")
+
+# 4. Warning Banner
+st.markdown("""
+<div class="warning-banner">
+    ⚡ WE DO NOT ALLOW/SUPPORT THE DOWNLOAD OF COPYRIGHTED MATERIAL!
+</div>
+""", unsafe_allow_html=True)
+
+# 5. Info Section
+st.markdown("""
+<div class="info-section">
+    <div class="section-title">What is <span>loader.fo</span></div>
+    <p style="color:#666; max-width:700px; margin:0 auto;">
+        loader.fo is one of the most popular downloader tools on the internet. 
+        With this tool, you can download and convert videos from almost anywhere on the internet.
+    </p>
+    
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h3>Experience Buffer-Free Entertainment With YouTube Video Downloader</h3>
+            <p>The YouTube Video Downloader provides uninterrupted entertainment and buffer-free experience for your favorite YouTube content. This user-friendly tool allows you to download videos effortlessly.</p>
+            <div class="arrow-icon">></div>
+        </div>
+        <div class="feature-card">
+            <h3>Your One-Stop Solution to YouTube Video Downloading</h3>
+            <p>Tired of those annoying buffering pauses ruining your YouTube binge? Well, say hello to uninterrupted entertainment with loader.fo! This nifty tool not only lets you download...</p>
+            <div class="arrow-icon">></div>
+        </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-# --- Input Area ---
-# Styled using CSS targeting stTextInput and stButton
-c_input, c_btn = st.columns([4, 1])
-with c_input:
-    # Emoji used as icon prefix in placeholder/label not easy, 
-    # relying on the CSS style of the container to look 'premium'
-    url = st.text_input("", placeholder="🔗  Paste URL here...", label_visibility="collapsed")
-
-with c_btn:
-    check_click = st.button("Download")
-
-# --- Logic & Result Area ---
-if url:
-    st.markdown('<div class="result-card">', unsafe_allow_html=True)
-    c_thumb, c_info = st.columns([1.2, 2])
-    
-    # 1. Fetch Info
-    info = None
-    preview_title = "Loading..."
-    preview_thumb = ""
-    selected_format_label = "MP4 1080p" # Fallback
-    file_size_str = "Calculating..."
-    
-    try:
-        ydl_opts = {"quiet": True, "skip_download": True}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            # lightweight fetch
-            info = ydl.extract_info(url, download=False)
-            preview_title = info.get("title", "Unknown Video")
-            preview_thumb = info.get("thumbnail", "")
-            
-            # Find best format details
-            formats = info.get("formats", [])
-            # Priority: MP4 1080p -> MP4 720p -> Best MP4
-            best = None
-            for f in reversed(formats):
-                if f.get("ext") == "mp4" and f.get("height", 0) >= 1080:
-                    best = f
-                    selected_format_label = "MP4 1080p"
-                    break
-            if not best:
-                for f in reversed(formats):
-                     if f.get("ext") == "mp4":
-                        best = f
-                        selected_format_label = "MP4 Auto"
-                        break
-            
-            if best:
-                val = best.get('filesize') or best.get('filesize_approx') or 0
-                if val > 0:
-                    file_size_str = f"{val/1024/1024:.1f} MB"
-                else:
-                    file_size_str = "~ MB"
-            
-    except Exception as e:
-        preview_title = "Video not found or unavailable"
-        st.error(f"Error fetching video: {e}")
-
-    # 2. Render Card Content
-    with c_thumb:
-        img_src = preview_thumb if preview_thumb else 'https://via.placeholder.com/320x180?text=No+Thumbnail'
-        st.markdown(f'<div class="result-thumb"><img src="{img_src}"></div>', unsafe_allow_html=True)
-        
-    with c_info:
-        st.markdown(f'<div class="video-title">{preview_title}</div>', unsafe_allow_html=True)
-        st.markdown(f"""
-        <div class="video-meta-row">
-            <div class="format-tag"><span style="color:#5356FF;">📹</span> {selected_format_label}</div>
-            <div class="size-tag">{file_size_str}</div>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown('<div class="add-format-link">+ Add another format</div>', unsafe_allow_html=True)
-        
-        # Download Logic
-        if st.button("Start Download", key="dl_real"):
-            if info:
-                with st.spinner("Processing..."):
-                     try:
-                        outtmpl = "downloaded_video.%(ext)s"
-                        ydl_download_opts = {
-                            "format": "bestvideo+bestaudio/best",
-                            "outtmpl": outtmpl,
-                            "quiet": True,
-                            "noplaylist": True,
-                        }
-                        with yt_dlp.YoutubeDL(ydl_download_opts) as ydl_d:
-                            ydl_d.download([url])
-                        
-                        # Find output
-                        candidates = list(Path(".").glob("downloaded_video.*"))
-                        if candidates:
-                            final_file = str(candidates[0])
-                            with open(final_file, "rb") as f:
-                                st.download_button(
-                                    label="⬇️ Save to Device",
-                                    data=f,
-                                    file_name=final_file,
-                                    mime="video/mp4",
-                                    use_container_width=True
-                                )
-                            st.success("Download Ready!")
-                        else:
-                            st.error("File download failed.")
-                     except Exception as e:
-                        st.error(f"Download Error: {e}")
-
-    st.markdown('</div>', unsafe_allow_html=True) # End Card
-
-# --- Footer ---
+# 6. FAQ (Visual Only)
 st.markdown("""
-<br><br><br>
-<div class="footer-details">
-    <h3>YouTube Video Downloader</h3>
-    <p>
-        loader.fo is one of the most popular downloader tools on the internet. <br>
-        With this tool, you can download and convert videos from almost anywhere on the internet.
-    </p>
-    <br>
-    <div class="nav-bar" style="justify-content: flex-start; margin-bottom:0;">
-       <span style="opacity:0.5; font-size:12px;">© 2026 Loader.fo Clone</span>
+<div class="info-section" style="margin-top:5rem;">
+    <div class="section-title">Frequently Asked <span>Questions</span></div>
+    <div style="display:flex; justify-content:center; gap:40px; text-align:left;">
+        <div style="flex:1; background:#f9f9f9; padding:20px; border-radius:12px;">
+            <h4>YouTubeDownloader: FAQs ❓</h4>
+            <p style="font-size:14px; color:#555;">Are there any subscription plans?</p>
+            <hr style="border:0; border-top:1px solid #ddd;">
+            <p style="font-size:14px; color:#555;">Can the downloader be used without info?</p>
+        </div>
+        <div style="flex:1; background:#f9f9f9; padding:20px; border-radius:12px;">
+            <h4>loader.fo: FAQs ❓</h4>
+            <p style="font-size:14px; color:#555;">Is it a one-time purchase?</p>
+            <hr style="border:0; border-top:1px solid #ddd;">
+            <p style="font-size:14px; color:#555;">Can the downloader be used safely?</p>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# 7. Dark Footer
+st.markdown("""
+<div class="footer-dark">
+    <h2>loader.fo</h2>
+    <p>Copyright © 2026 All Rights Reserved</p>
+    <div style="margin-top:20px; font-size:12px; color:#555;">
+        English • Deutsch • Polski • Français • Español • Bahasa Indonesia
     </div>
 </div>
 """, unsafe_allow_html=True)
