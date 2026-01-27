@@ -4,172 +4,183 @@ import instaloader
 import os
 import shutil
 import time
-import requests
-from streamlit_lottie import st_lottie
 
 # --- 1. KONFIGURASI HALAMAN ---
-st.set_page_config(page_title="Rifki Downloader", page_icon="🍃", layout="centered")
+st.set_page_config(page_title="Rifki Downloader", page_icon="🍃", layout="wide")
 
-# --- 2. FUNGSI UTILITIES ---
-def load_lottieurl(url):
-    try:
-        r = requests.get(url)
-        if r.status_code != 200: return None
-        return r.json()
-    except: return None
-
-def clean_filename(title):
-    return "".join([c for c in title if c.isalpha() or c.isdigit() or c==' ']).rstrip()
-
-def detect_type(url):
-    if "instagram.com/p/" in url: return "FOTO"
-    return "VIDEO"
-
-# --- 3. CSS: TEMA EARTHY GREEN CARD ---
+# --- 2. CSS CUSTOM (THEME: GREEN & REFERENCE LAYOUT) ---
 st.markdown("""
     <style>
-    /* BACKGROUND HALAMAN: Gradasi Cream ke Hijau Muda */
+    /* Background Halaman Utama (Putih Bersih seperti web modern) */
     .stApp {
-        background: linear-gradient(180deg, #F0E491 0%, #BBC863 100%);
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #FDFEF8;
+        font-family: 'Segoe UI', sans-serif;
     }
 
-    /* KARTU UTAMA (Card Container) */
-    /* Ini adalah kotak tengah yang mirip contoh gambar, pakai Hijau Tua (#31694E) */
-    .block-container {
-        background-color: #31694E;
-        padding: 3rem 2rem;
-        border-radius: 30px; /* Sudut membulat */
-        box-shadow: 0 20px 50px rgba(49, 105, 78, 0.4); /* Bayangan halus */
-        margin-top: 2rem;
-    }
-
-    /* TEXT STYLE */
-    h1 {
-        color: #F0E491 !important; /* Judul warna Cream biar kontras */
+    /* KOTAK UTAMA (HERO SECTION) - Menggantikan Kotak Ungu di referensi */
+    .hero-container {
+        background-color: #31694E; /* Hijau Hutan (Gantiin Ungu) */
+        padding: 4rem 2rem;
+        border-radius: 20px;
         text-align: center;
+        color: white;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 25px rgba(49, 105, 78, 0.3);
+    }
+
+    /* Judul di dalam Kotak Hijau */
+    .hero-title {
+        font-size: 3rem;
         font-weight: 800;
-        font-size: 2.2rem;
-        margin-bottom: 5px;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        margin-bottom: 10px;
+        color: #F0E491; /* Cream Kuning */
     }
-    p {
-        color: #BBC863 !important; /* Sub-judul warna Hijau Muda */
-        text-align: center;
-        font-size: 1rem;
+    
+    .hero-subtitle {
+        font-size: 1.2rem;
         margin-bottom: 30px;
+        color: #E8F5E9;
     }
 
-    /* INPUT BOX (Kolom Link) */
+    /* INPUT BOX CUSTOM */
+    /* Kita hack style input box Streamlit biar mirip referensi */
     .stTextInput > div > div > input {
-        background-color: #ffffff;
-        color: #31694E;
+        padding: 20px;
+        border-radius: 10px;
         border: none;
-        border-radius: 15px;
-        padding: 18px;
-        text-align: center;
-        font-size: 16px;
-        box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-    }
-    /* Efek saat diklik */
-    .stTextInput > div > div > input:focus {
-        box-shadow: 0 0 0 3px #BBC863;
-    }
-
-    /* TOMBOL UTAMA (Button) */
-    /* Warna #F0E491 (Cream) agar POP di atas background hijau tua */
-    .stButton > button {
-        width: 100%;
-        background-color: #F0E491;
-        color: #31694E; /* Teks tombol hijau tua */
-        border: none;
-        padding: 18px 0px;
         font-size: 18px;
-        font-weight: 900;
-        border-radius: 15px;
-        margin-top: 15px;
-        transition: all 0.3s ease;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    }
-    
-    /* Efek Hover Tombol */
-    .stButton > button:hover {
-        background-color: #ffffff; /* Berubah putih saat disentuh */
-        color: #658C58;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
 
-    /* Progress Bar Custom Colors */
-    .stProgress > div > div > div > div {
-        background-color: #F0E491;
+    /* TOMBOL DOWNLOAD (Mirip tombol di sebelah input) */
+    .stButton > button {
+        background-color: #F0E491; /* Kuning Cream */
+        color: #31694E; /* Teks Hijau Tua */
+        font-weight: bold;
+        font-size: 18px;
+        padding: 15px 30px;
+        border-radius: 10px;
+        border: none;
+        width: 100%;
+        transition: 0.3s;
+    }
+    .stButton > button:hover {
+        background-color: #ffffff;
+        transform: scale(1.02);
+    }
+
+    /* BAGIAN TUTORIAL (Langkah-langkah) */
+    .tutorial-header {
+        text-align: center;
+        color: #31694E;
+        font-weight: bold;
+        font-size: 1.5rem;
+        margin-top: 2rem;
+        margin-bottom: 1rem;
     }
     
-    /* Hide Footer */
+    /* Kartu Langkah (Step Cards) */
+    .step-card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 15px;
+        border: 1px solid #BBC863;
+        height: 100%;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    .step-number {
+        font-size: 3rem;
+        font-weight: 900;
+        color: #E0E0E0; /* Abu-abu pudar */
+        line-height: 1;
+    }
+    .step-title {
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: #31694E;
+        margin-bottom: 10px;
+    }
+    .step-desc {
+        font-size: 0.9rem;
+        color: #555;
+    }
+
+    /* Menghilangkan elemen bawaan */
     footer {visibility: hidden;}
     #MainMenu {visibility: hidden;}
-    
+    .block-container {padding-top: 1rem;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- 4. TAMPILAN UTAMA ---
-# Animasi Simple & Bersih (Icon Download)
-lottie_url = "https://assets9.lottiefiles.com/packages/lf20_S8d8sK.json" 
-lottie_json = load_lottieurl(lottie_url)
+# --- 3. LAYOUT UTAMA (HERO SECTION) ---
+# Membuat kotak hijau besar
+st.markdown('<div class="hero-container">', unsafe_allow_html=True)
+st.markdown('<div class="hero-title">Rifki Downloader</div>', unsafe_allow_html=True)
+st.markdown('<div class="hero-subtitle">Download video TikTok, Instagram, & YouTube Tanpa Watermark (Gratis)</div>', unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
 
-col1, col2, col3 = st.columns([1, 2, 1])
-with col2:
-    if lottie_json:
-        st_lottie(lottie_json, height=120, key="icon")
+# Layout Input di tengah (Kita pakai kolom biar rapih di tengah layarnya)
+col_spacer1, col_main, col_spacer2 = st.columns([1, 2, 1])
 
-st.markdown("<h1>Rifki Downloader</h1>", unsafe_allow_html=True)
-st.markdown("<p>Paste Link TikTok • Instagram • YouTube</p>", unsafe_allow_html=True)
-
-# --- 5. LOGIKA APLIKASI ---
-# Input Link
-url = st.text_input("", placeholder="Tempel link video di sini...")
-
-# Tombol SELALU MUNCUL (Full Width)
-if st.button("MULAI DOWNLOAD ⬇️", use_container_width=True):
+with col_main:
+    # INPUT LINK
+    url = st.text_input("", placeholder="Tempel tautan video di sini...")
     
+    # TOMBOL DOWNLOAD
+    # Kita taruh tombol agak berjarak
+    st.write("")
+    process_btn = st.button("DOWNLOAD SEKARANG ⬇️", use_container_width=True)
+
+
+# --- 4. LOGIKA DOWNLOAD (Backend) ---
+if process_btn:
     if not url:
-        st.warning("⚠️ Masukkan link dulu dong!")
+        st.warning("⚠️ Harap masukkan link video terlebih dahulu!")
     else:
-        tipe = detect_type(url)
+        # Deteksi Tipe
+        tipe = "VIDEO"
+        if "instagram.com/p/" in url:
+            tipe = "FOTO"
+
+        # Tampilkan Loading
+        status_box = st.empty()
+        progress_bar = st.progress(0)
         
-        # --- PROSES VIDEO ---
+        # --- LOGIKA VIDEO ---
         if tipe == "VIDEO":
-            status_area = st.empty()
-            status_area.info("🔄 Sedang mencari video...")
-            bar = st.progress(10)
+            status_box.info("⏳ Sedang memproses video...")
             
+            # Fungsi Bersih Nama File
+            def clean_name(t): return "".join([c for c in t if c.isalnum() or c==' ']).rstrip()
+
             ydl_opts = {'format': 'best', 'outtmpl': 'temp_vid.%(ext)s', 'quiet': True}
             
             try:
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    bar.progress(50)
+                    progress_bar.progress(30)
                     info = ydl.extract_info(url, download=True)
-                    judul = clean_filename(info.get('title', 'Video'))
+                    judul = clean_name(info.get('title', 'Video Result'))
                     ext = info.get('ext', 'mp4')
-                    bar.progress(100)
+                    progress_bar.progress(100)
                 
                 if os.path.exists(f"temp_vid.{ext}"):
-                    status_area.success("✅ Berhasil!")
+                    status_box.success("✅ Video Siap!")
+                    # Tombol Simpan
                     with open(f"temp_vid.{ext}", "rb") as f:
                         st.download_button(
-                            label="SIMPAN KE GALERI (HD)",
+                            label=f"⬇️ SIMPAN VIDEO ({ext.upper()})",
                             data=f,
                             file_name=f"{judul}.{ext}",
                             mime=f"video/{ext}",
                             use_container_width=True
                         )
             except Exception as e:
-                status_area.error(f"Gagal: {e}")
+                status_box.error(f"Gagal: {e}")
 
-        # --- PROSES FOTO ---
+        # --- LOGIKA FOTO ---
         elif tipe == "FOTO":
-            status_area = st.empty()
-            status_area.info("📸 Sedang mengambil foto...")
+            status_box.info("📸 Mengambil foto...")
             if os.path.exists("temp_img"): shutil.rmtree("temp_img")
             
             try:
@@ -183,12 +194,11 @@ if st.button("MULAI DOWNLOAD ⬇️", use_container_width=True):
                     if f.endswith(".jpg"):
                         target = os.path.join("temp_img", f)
                         break
-                
                 if target:
-                    status_area.success("✅ Foto siap!")
+                    status_box.success("✅ Foto Siap!")
                     with open(target, "rb") as f:
                         st.download_button(
-                            label="SIMPAN FOTO",
+                            label="⬇️ SIMPAN FOTO",
                             data=f,
                             file_name=f"IG_{shortcode}.jpg",
                             mime="image/jpeg",
@@ -196,6 +206,47 @@ if st.button("MULAI DOWNLOAD ⬇️", use_container_width=True):
                         )
                     shutil.rmtree("temp_img")
                 else:
-                    status_area.error("Foto tidak ditemukan.")
-            except Exception as e:
-                status_area.error("Gagal ambil foto.")
+                    status_box.error("Foto tidak ditemukan.")
+            except:
+                status_box.error("Gagal. Pastikan akun publik.")
+
+
+# --- 5. BAGIAN TUTORIAL (LAYOUT SEPERTI REFERENSI) ---
+st.write("---") # Garis pemisah
+st.markdown('<div class="tutorial-header">Cara Download Video TikTok/IG/YT:</div>', unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown("""
+    <div class="step-card">
+        <div class="step-number">1</div>
+        <div class="step-title">Temukan Video</div>
+        <div class="step-desc">
+            Buka aplikasi TikTok, Instagram, atau YouTube di HP kamu. Cari video yang ingin kamu simpan.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("""
+    <div class="step-card">
+        <div class="step-number">2</div>
+        <div class="step-title">Salin Tautan</div>
+        <div class="step-desc">
+            Ketuk tombol <b>Bagikan (Share)</b>, lalu pilih menu <b>Salin Tautan (Copy Link)</b>.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    st.markdown("""
+    <div class="step-card">
+        <div class="step-number">3</div>
+        <div class="step-title">Download</div>
+        <div class="step-desc">
+            Tempel link di kolom bagian atas situs ini, lalu klik tombol <b>Download Sekarang</b>.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
