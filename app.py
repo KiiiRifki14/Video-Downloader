@@ -2,7 +2,7 @@ import streamlit as st
 import backend
 import os
 
-st.set_page_config(page_title="Ki.downloader - Video Downloader", page_icon="🔵", layout="wide")
+st.set_page_config(page_title="Ki.Downloader - Ki Downloader", page_icon="🔵", layout="wide")
 
 # --- Session State for Theme ---
 if 'theme' not in st.session_state:
@@ -441,3 +441,4 @@ English • Deutsch • Polski • Français • Español • Bahasa Indonesia
 </div>
 </div>
 """, unsafe_allow_html=True)
+
