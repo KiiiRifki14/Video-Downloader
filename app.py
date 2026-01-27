@@ -8,191 +8,317 @@ from pathlib import Path
 
 st.set_page_config(page_title="Rifki Downloader", page_icon="🍃", layout="wide")
 
-# --- CSS: dark theme, purple accents, nav tabs, preview card, controls ---
+# --- CSS: Loader.fo inspired (Dark, Purple/Blue Gradient, Rounded) ---
 st.markdown("""
 <style>
-/* Page background */
-.stApp {
-  background: #0b0f1a;
-  color: #e6eef8;
-  font-family: Inter, 'Segoe UI', Roboto, Arial, sans-serif;
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap');
+
+/* Global Variables */
+:root {
+  --bg-color: #0d0d0d;
+  --card-bg: #161616;
+  --accent-gradient: linear-gradient(90deg, #5356FF 0%, #378CE7 100%);
+  --accent-color: #5356FF;
+  --text-main: #ffffff;
+  --text-muted: #888888;
 }
 
-/* Top nav (tabs) */
-.top-nav {
-  display:flex;
-  gap:12px;
-  align-items:center;
-  margin-bottom:18px;
+/* Page Reset */
+.stApp {
+  background-color: var(--bg-color);
+  font-family: 'Outfit', sans-serif;
+  color: var(--text-main);
+}
+header {visibility: hidden;}
+.block-container {
+    padding-top: 2rem;
+    padding-bottom: 5rem;
+    max-width: 900px;
+}
+
+/* 1. Header / Top Bar */
+.top-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+.logo {
+    font-size: 24px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.logo span { color: #fff; }
+.logo .highlight { color: #378CE7; } /* .fo equivalent color */
+
+/* Nav Icons Bar (Horizontal) */
+.nav-bar {
+    display: flex;
+    gap: 8px;
+    background: transparent;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-bottom: 3rem;
+    justify-content: center;
 }
 .nav-item {
-  color: rgba(255,255,255,0.85);
-  padding:10px 14px;
-  border-radius:10px;
-  font-weight:600;
-  background: transparent;
-  border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: 0.3s;
+    border: 1px solid transparent;
 }
 .nav-item.active {
-  background: linear-gradient(90deg,#6b46ff,#8b5cf6);
-  box-shadow: 0 8px 30px rgba(139,92,246,0.12);
-  color: #fff;
+    background: transparent;
+    color: #fff;
+    border-bottom: 2px solid var(--accent-color);
+    border-radius: 0;
+}
+.nav-item:hover {
+    color: #fff;
+}
+.nav-icon { font-size: 16px; }
+
+/* 2. Hero Section */
+.hero-container {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+.hero-title {
+    font-size: 48px;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+.hero-title span {
+    color: #378CE7; /* Fallback */
+    background: var(--accent-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.hero-subtitle {
+    font-size: 15px;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin: 0 auto 20px auto;
+    line-height: 1.5;
+}
+.copyright-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 16px;
+    border-radius: 99px;
+    font-size: 11px;
+    color: #a0a0a0;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,0.05);
 }
 
-/* Hero area */
-.hero {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  border: 1px solid rgba(255,255,255,0.03);
-  padding: 26px;
-  border-radius: 14px;
-  margin-bottom: 18px;
+/* 3. Input Area */
+.url-input-container {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid #333;
+    max-width: 700px;
+    margin: 0 auto 3rem auto;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
 }
-.hero .title {
-  font-size: 28px;
-  font-weight: 800;
-  color: #ffffff;
-  margin-bottom: 6px;
+.link-icon-box {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
 }
-.hero .desc {
-  color: rgba(230,238,248,0.85);
-  margin-bottom: 12px;
-  font-size: 14px;
+/* Streamlit text input override */
+.stTextInput {
+    width: 100%;
 }
-
-/* Warning */
-.warn {
-  background: rgba(255,255,255,0.02);
-  border-left: 4px solid #ffb86b;
-  padding: 10px 12px;
-  border-radius: 8px;
-  color: #ffd9b3;
-  margin-bottom: 14px;
-  font-weight:600;
+.stTextInput > div > div > input {
+    background-color: transparent;
+    color: #fff;
+    border: none;
+    font-size: 16px;
 }
-
-/* Input row */
-.input-row {
-  display:flex;
-  gap:12px;
-  align-items:center;
-  width:100%;
+/* Focus state override */
+.stTextInput > div > div > input:focus {
+    box-shadow: none;
+    border: none;
 }
-.input-box {
-  flex:1;
-  display:flex;
-  align-items:center;
-  gap:10px;
-  background: rgba(255,255,255,0.02);
-  padding: 10px 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.03);
-}
-.input-box input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: #e6eef8;
-  width:100%;
-  font-size:15px;
-}
-.clip-icon {
-  width:36px;
-  height:36px;
-  background: linear-gradient(90deg,#6b46ff,#8b5cf6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  border-radius:8px;
-  box-shadow: 0 8px 20px rgba(107,70,255,0.12);
+.paste-btn-wrapper {
+    background: #378CE7; /* Fallback */
+    background: var(--accent-gradient);
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
 }
 
-/* Preview card */
-.preview {
-  display:flex;
-  gap:16px;
-  align-items:flex-start;
-  margin-top:16px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
-  padding:14px;
-  border-radius:12px;
-  border: 1px solid rgba(255,255,255,0.03);
+/* 4. Result Card */
+.result-card {
+    background: var(--card-bg);
+    border: 1px solid #333;
+    border-radius: 20px;
+    padding: 24px;
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+    max-width: 700px;
+    margin: 0 auto;
 }
-.thumb {
-  width:160px;
-  height:90px;
-  background:#0f1724;
-  border-radius:8px;
-  overflow:hidden;
-  flex-shrink:0;
+.result-thumb {
+    width: 240px;
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    flex-shrink: 0;
 }
-.thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-.preview-meta { flex:1; }
-.preview-title { font-weight:700; color:#fff; margin-bottom:6px; }
-.preview-sub { color: rgba(230,238,248,0.75); font-size:13px; margin-bottom:8px; }
+.result-thumb img {
+    width: 100%;
+    display: block;
+    border-radius: 12px;
+}
+.result-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.video-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    line-height: 1.4;
+}
+.video-meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    background: rgba(0,0,0,0.3);
+    padding: 10px 16px;
+    border-radius: 8px;
+}
+.format-tag {
+    font-weight: 600;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.size-tag {
+    color: #fff;
+    font-weight: 700;
+}
+.add-format-link {
+    color: #378CE7;
+    font-size: 13px;
+    text-decoration: none;
+    margin-bottom: 1rem;
+    display: inline-block;
+    cursor: pointer;
+}
 
-/* Format selector */
-.format-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:8px; }
-.format-pill {
-  background: rgba(255,255,255,0.02);
-  padding:8px 12px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,0.03);
-  color:#e6eef8;
-  font-weight:600;
-  cursor:pointer;
+/* Custom Button Styling via Styler is hard, we use st.button but inject style to target it */
+div[data-testid="stButton"] button {
+    width: 100%;
+    background: var(--accent-gradient);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 16px;
+    transition: 0.2s;
 }
-.format-pill.selected {
-  background: linear-gradient(90deg,#6b46ff,#8b5cf6);
-  box-shadow: 0 8px 30px rgba(139,92,246,0.12);
-  color:#fff;
-}
-
-/* Add format link */
-.add-format {
-  color:#9fb7ff;
-  font-weight:700;
-  cursor:pointer;
+div[data-testid="stButton"] button:hover {
+    opacity: 0.9;
+    border: none;
+    color: white;
 }
 
-/* Download button */
-.download-btn {
-  background: linear-gradient(90deg,#7c3aed,#a78bfa);
-  color: #fff;
-  padding:12px 20px;
-  border-radius:12px;
-  font-weight:800;
-  border:none;
-  box-shadow: 0 12px 30px rgba(124,58,237,0.18);
+/* Footer Details */
+.footer-details {
+    margin-top: 5rem;
+    color: var(--text-muted);
+}
+.footer-details h3 {
+    color: #fff;
+    font-size: 20px;
+    margin-bottom: 1rem;
+}
+.footer-details p {
+    font-size: 14px;
+    line-height: 1.6;
 }
 
-/* Footer small */
-.footer-note { color: rgba(230,238,248,0.55); font-size:13px; margin-top:18px; }
-
-/* Responsive */
-@media (max-width: 880px) {
-  .preview { flex-direction:column; }
-  .thumb { width:100%; height:180px; }
-  .input-row { flex-direction:column; align-items:stretch; }
-  .download-btn { width:100%; }
+/* Floating Shapes (Background decoration) */
+.shape {
+    position: fixed;
+    z-index: -1;
+    opacity: 0.3;
+    pointer-events: none;
 }
 </style>
 """, unsafe_allow_html=True)
 
-# --- Top navigation (tabs) ---
-st.markdown('<div class="top-nav">', unsafe_allow_html=True)
-tabs = ["YouTube Video", "4k Video", "YouTube MP3", "YouTube Playlist", "YouTube WAV", "YouTube 1080p"]
-# simple active on first
-for i, t in enumerate(tabs):
-    cls = "nav-item active" if i == 0 else "nav-item"
-    st.markdown(f'<div class="{cls}">{t}</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+# --- Header ---
+st.markdown("""
+<div class="top-header">
+    <div class="logo">Loader<span>.fo</span></div>
+    <div style="display:flex; gap:10px;">
+        <!-- Theme toggle placeholder -->
+        <span style="font-size:18px;">🌙</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-# --- Hero with title, description, and warning ---
-st.markdown('<div class="hero">', unsafe_allow_html=True)
-st.markdown('<div class="title">YouTube Video Downloader</div>', unsafe_allow_html=True)
-st.markdown('<div class="desc">Try this unique tool for quick, hassle-free downloads from YouTube. Transform your offline video collection with this reliable and efficient downloader.</div>', unsafe_allow_html=True)
-st.markdown('<div class="warn">⚡ WE DO NOT ALLOW/SUPPORT THE DOWNLOAD OF COPYRIGHTED MATERIAL</div>', unsafe_allow_html=True)
-st.markdown('</div>', unsafe_allow_html=True)
+# --- Nav Tabs (Visual Only) ---
+st.markdown("""
+<div class="nav-bar">
+    <div class="nav-item active">📺 YouTube Video Downloader</div>
+    <div class="nav-item">🎞️ 4k Video Downloader</div>
+    <div class="nav-item">🎵 YouTube to MP3</div>
+    <div class="nav-item">📜 YouTube Playlist</div>
+    <div class="nav-item">🎼 YouTube to Wav</div>
+</div>
+""", unsafe_allow_html=True)
+
+# --- Hero ---
+st.markdown("""
+<div class="hero-container">
+    <div class="hero-title">YouTube Video<br><span>Downloader</span></div>
+    <div class="hero-subtitle">
+        Try this unique tool for quick, hassle-free downloads from YouTube. 
+        Transform your offline video collection with this reliable and efficient downloader.
+    </div>
+    <div class="copyright-pill">
+        ⚡ WE DO NOT ALLOW/SUPPORT THE DOWNLOAD OF COPYRIGHTED MATERIAL!
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 
 # --- Input row: URL input with clipboard icon and Download button ---
 col1, col2 = st.columns([3,1])
