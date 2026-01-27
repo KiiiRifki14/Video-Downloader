@@ -8,7 +8,7 @@ import requests
 from streamlit_lottie import st_lottie
 
 # --- KONFIGURASI HALAMAN ---
-st.set_page_config(page_title="Ultra Downloader", page_icon="⚡", layout="centered")
+st.set_page_config(page_title="Rifki Downloader", page_icon="⚡", layout="centered")
 
 # --- FUNGSI LOAD ANIMASI LOTTIE ---
 def load_lottieurl(url):
@@ -170,3 +170,4 @@ if url:
                     status.error("Foto tidak ketemu.")
             except Exception as e:
                 status.error(f"Gagal: {e}")
+
