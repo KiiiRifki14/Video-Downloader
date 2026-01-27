@@ -2,7 +2,7 @@ import streamlit as st
 import backend
 import os
 
-st.set_page_config(page_title="Ki.Downloader - Ki Downloader", page_icon="🔵", layout="wide")
+st.set_page_config(page_title="Ki.downloader - Video Downloader", page_icon="🔵", layout="wide")
 
 # --- Session State for Theme ---
 if 'theme' not in st.session_state:
@@ -345,39 +345,57 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 
 # --- Logic Handling ---
+if 'video_info' not in st.session_state:
+    st.session_state.video_info = None
+
+if 'current_url' not in st.session_state:
+    st.session_state.current_url = ""
+
+# When Download is clicked, fetch and store in session state
 if dl_clicked and url_input:
+    # Reset if new URL
+    st.session_state.current_url = url_input
     with st.spinner("Fetching info..."):
         info = backend.get_video_info(url_input)
-        
         if info:
-            st.markdown('<div class="result-card">', unsafe_allow_html=True)
-            r_img, r_txt = st.columns([1, 1.5])
-            
-            with r_img:
-                thumb = info.get('thumbnail', '')
-                st.markdown(f'<div class="res-thumb"><img src="{thumb}"></div>', unsafe_allow_html=True)
-            
-            with r_txt:
-                title = info.get('title', 'Unknown Title')
-                st.markdown(f'<div class="res-title">{title}</div>', unsafe_allow_html=True)
-                st.markdown('<div class="res-meta">Format: MP4 (Best)</div>', unsafe_allow_html=True)
-                
-                if st.button("Save Video", key="save_video"):
-                     path = backend.download_video(url_input)
-                     if path:
-                         with open(path, "rb") as f:
-                             st.download_button(
-                                 label="⬇️ Click to Save",
-                                 data=f,
-                                 file_name=os.path.basename(path),
-                                 mime="video/mp4"
-                             )
-                         st.success("Video ready!")
-                     else:
-                         st.error("Download failed.")
-            st.markdown('</div>', unsafe_allow_html=True)
+            st.session_state.video_info = info
         else:
             st.error("Invalid URL or Video not found.")
+            st.session_state.video_info = None
+
+# If we have stored info, display the result card
+if st.session_state.video_info:
+    info = st.session_state.video_info
+    
+    st.markdown('<div class="result-card">', unsafe_allow_html=True)
+    r_img, r_txt = st.columns([1, 1.5])
+    
+    with r_img:
+        thumb = info.get('thumbnail', '')
+        st.markdown(f'<div class="res-thumb"><img src="{thumb}"></div>', unsafe_allow_html=True)
+    
+    with r_txt:
+        title = info.get('title', 'Unknown Title')
+        st.markdown(f'<div class="res-title">{title}</div>', unsafe_allow_html=True)
+        st.markdown('<div class="res-meta">Format: MP4 (Best)</div>', unsafe_allow_html=True)
+        
+        # Download Action
+        if st.button("Save Video", key="save_video", type="primary"):
+             with st.spinner("Downloading..."):
+                 path = backend.download_video(st.session_state.current_url)
+                 if path:
+                     with open(path, "rb") as f:
+                         st.download_button(
+                             label="⬇️ Click to Save File",
+                             data=f,
+                             file_name=os.path.basename(path),
+                             mime="video/mp4",
+                             key="real_download_btn"
+                         )
+                     st.success("Download Complete! Click the button above to save.")
+                 else:
+                     st.error("Download failed. Please try again.")
+    st.markdown('</div>', unsafe_allow_html=True)
 
 # 4. Warning Banner
 st.markdown("""
@@ -441,4 +459,3 @@ English • Deutsch • Polski • Français • Español • Bahasa Indonesia
 </div>
 </div>
 """, unsafe_allow_html=True)
-
