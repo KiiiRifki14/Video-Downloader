@@ -1,45 +1,77 @@
 import yt_dlp
+import instaloader
 import os
-import uuid # Tambahkan ini untuk nama unik
+import shutil
+import uuid
 from pathlib import Path
 
+# --- INFO VIDEO ---
 def get_video_info(url):
     try:
+        if "instagram.com" in url:
+            return {"title": "Instagram Post", "thumbnail": None, "duration_string": "Slide/Carousel", "ext": "mp4/jpg"}
+        
         ydl_opts = {"quiet": True, "skip_download": True}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             return info
     except Exception as e:
-        print(f"Error fetching info: {e}")
         return None
 
+# --- ENGINE DOWNLOAD (RETURN LIST FILE) ---
 def download_video(url):
-    try:
-        # Gunakan folder unique agar tidak bentrok antar user
-        unique_id = str(uuid.uuid4())
-        temp_dir = Path("temp_downloads") / unique_id
-        temp_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Template nama file
-        outtmpl = str(temp_dir / "%(title)s.%(ext)s")
-        
-        ydl_opts = {
-            "outtmpl": outtmpl,
-            "quiet": True,
-            "noplaylist": True,
-            # Format terbaik yg kompatibel (mp4) agar tidak perlu merge ribet
-            "format": "best[ext=mp4]/best", 
-        }
+    # Buat folder unik
+    unique_id = str(uuid.uuid4())
+    base_folder = Path("temp_downloads")
+    target_dir = base_folder / unique_id
+    target_dir.mkdir(parents=True, exist_ok=True)
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([url])
+    found_files = [] # Kita akan menampung semua file disini
+
+    try:
+        # === KASUS 1: INSTAGRAM (Bisa Banyak File) ===
+        if "instagram.com" in url:
+            L = instaloader.Instaloader(
+                save_metadata=False, 
+                download_videos=True,
+                download_video_thumbnails=False,
+                download_geotags=False, 
+                download_comments=False,
+                compress_json=False
+            )
             
-        # Cari file yang barusan didownload di folder unique tersebut
-        candidates = list(temp_dir.glob("*"))
-        if candidates:
-            # Kembalikan path file
-            return str(candidates[0])
-        return None
+            # Ambil shortcode
+            if "/p/" in url: shortcode = url.split("/p/")[1].split("/")[0]
+            elif "/reel/" in url: shortcode = url.split("/reel/")[1].split("/")[0]
+            else: return []
+
+            post = instaloader.Post.from_shortcode(L.context, shortcode)
+            L.download_post(post, target=target_dir)
+
+        # === KASUS 2: YOUTUBE/TIKTOK (Biasanya 1 File) ===
+        else:
+            outtmpl = str(target_dir / "%(title)s.%(ext)s")
+            ydl_opts = {
+                "outtmpl": outtmpl,
+                "quiet": True,
+                "noplaylist": True,
+                "format": "best",
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+        
+        # === SCAN FOLDER HASIL ===
+        # Ambil semua file JPG dan MP4
+        for f in os.listdir(target_dir):
+            if f.endswith(('.jpg', '.png', '.jpeg', '.mp4', '.webm')):
+                full_path = str(target_dir / f)
+                found_files.append(full_path)
+        
+        # Urutkan file biar rapi (opsional)
+        found_files.sort()
+        
+        return found_files # Mengembalikan LIST (Daftar file), bukan cuma 1 string
+
     except Exception as e:
-        print(f"Download error: {e}")
-        return None
+        print(f"Error: {e}")
+        return []
